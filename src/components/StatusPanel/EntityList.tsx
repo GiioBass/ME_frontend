@@ -19,7 +19,7 @@ const EntityList: React.FC<EntityListProps> = ({ items, enemies, onTake, onAttac
                     <div className="flex flex-wrap gap-3">
                         {items.map((item: any, idx: number) => (
                             <button key={idx}
-                                className="group flex items-center gap-2 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-500 hover:text-yellow-200 px-4 py-2 rounded border border-yellow-800/30 hover:border-yellow-500/50 transition-all active:scale-95 shadow-md flex-grow justify-between"
+                                className="group flex items-center gap-2 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-500 hover:text-yellow-200 px-4 py-2 rounded border border-yellow-800/30 hover:border-yellow-500/50 transition-all shadow-md flex-grow justify-between"
                                 onClick={() => onTake(item.name)}
                             >
                                 <span className="font-bold">{item.name}</span>
@@ -48,7 +48,7 @@ const EntityList: React.FC<EntityListProps> = ({ items, enemies, onTake, onAttac
                                 </div>
 
                                 <button
-                                    className="mt-1 w-full font-bold bg-red-900/40 hover:bg-red-600 text-red-200 hover:text-white py-3 rounded border border-red-700/50 hover:border-red-400 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider"
+                                    className="mt-1 w-full font-bold bg-red-900/40 hover:bg-red-600 text-red-200 hover:text-white py-3 rounded border border-red-700/50 hover:border-red-400 transition-all shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider"
                                     onClick={() => onAttack(enemy.name)}
                                 >
                                     <Skull size={16} /> ENGAGE TARGET

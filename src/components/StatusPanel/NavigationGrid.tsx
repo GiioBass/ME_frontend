@@ -11,7 +11,7 @@ const NavigationGrid: React.FC<NavigationGridProps> = ({ exits, onMove }) => {
             <div className="grid grid-cols-3 gap-2 text-center max-w-[140px] mx-auto">
                 <div />
                 <button
-                    className={`aspect-square flex items-center justify-center rounded transition-all active:scale-95 ${exits['north']
+                    className={`aspect-square flex items-center justify-center rounded transition-all ${exits['north']
                         ? 'bg-green-800/30 hover:bg-green-600/50 text-green-300 border border-green-600/50 shadow-[0_0_5px_rgba(0,255,0,0.1)]'
                         : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
                     onClick={() => exits['north'] && onMove('north')}
@@ -19,7 +19,7 @@ const NavigationGrid: React.FC<NavigationGridProps> = ({ exits, onMove }) => {
                 >N</button>
                 <div />
                 <button
-                    className={`aspect-square flex items-center justify-center rounded transition-all active:scale-95 ${exits['west']
+                    className={`aspect-square flex items-center justify-center rounded transition-all ${exits['west']
                         ? 'bg-green-800/30 hover:bg-green-600/50 text-green-300 border border-green-600/50 shadow-[0_0_5px_rgba(0,255,0,0.1)]'
                         : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
                     onClick={() => exits['west'] && onMove('west')}
@@ -32,7 +32,7 @@ const NavigationGrid: React.FC<NavigationGridProps> = ({ exits, onMove }) => {
                 </div>
 
                 <button
-                    className={`aspect-square flex items-center justify-center rounded transition-all active:scale-95 ${exits['east']
+                    className={`aspect-square flex items-center justify-center rounded transition-all ${exits['east']
                         ? 'bg-green-800/30 hover:bg-green-600/50 text-green-300 border border-green-600/50 shadow-[0_0_5px_rgba(0,255,0,0.1)]'
                         : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
                     onClick={() => exits['east'] && onMove('east')}
@@ -40,7 +40,7 @@ const NavigationGrid: React.FC<NavigationGridProps> = ({ exits, onMove }) => {
                 >E</button>
                 <div />
                 <button
-                    className={`aspect-square flex items-center justify-center rounded transition-all active:scale-95 ${exits['south']
+                    className={`aspect-square flex items-center justify-center rounded transition-all ${exits['south']
                         ? 'bg-green-800/30 hover:bg-green-600/50 text-green-300 border border-green-600/50 shadow-[0_0_5px_rgba(0,255,0,0.1)]'
                         : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
                     onClick={() => exits['south'] && onMove('south')}

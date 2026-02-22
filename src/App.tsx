@@ -81,41 +81,42 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-space-gradient text-slate-200 font-sans flex items-center justify-center p-4 md:px-32 md:py-12 relative overflow-hidden">
-      
+    <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-x-hidden overflow-y-auto flex justify-center p-4 md:p-8 relative">
+
       {/* Decorative Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-stitch-blue/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-stitch-cyan/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       {/* Main Container */}
-      <div className="w-[90%] max-w-7xl h-[85vh] flex flex-col md:flex-row gap-6 relative z-20 mx-auto">
+      <div className="w-full max-w-7xl h-auto min-h-full md:h-full md:max-h-[95vh] flex flex-col md:flex-row gap-6 relative z-20 mx-auto">
 
         {/* Main Terminal Output */}
         <GameTerminal history={history} />
 
         {/* Side Panel (HUD) */}
         <div className="w-full md:w-[450px] flex flex-col gap-6 h-full overflow-hidden">
-          
+
           {/* Main Title Hub */}
           <div className="glass-panel p-4 rounded-2xl flex items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.1)]">
             <h1 className="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
-              Mystic <span className="text-white">Explorers</span>
+              <span className="text-white"> Mystic Explorers</span>
             </h1>
           </div>
 
-          {/* Stats */}
+          {/* Stats & Actions */}
           {gameState?.player ? (
-            <div className="relative">
+            <div className="flex flex-col gap-4">
               <BioMetrics
                 name={gameState.player.name}
                 stats={gameState.player.stats}
               />
               <button
                 onClick={() => setIsInventoryOpen(true)}
-                className="absolute top-4 right-4 text-stitch-cyan hover:text-white transition-all bg-stitch-blue/20 hover:bg-stitch-cyan/20 p-2.5 rounded-xl border border-stitch-blue/50 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.2)]"
-                title="Open Inventory"
+                className="w-full glass-panel-interactive py-3 rounded-xl flex items-center justify-center gap-3 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                title="Open Storage Unit"
               >
-                <Package size={22} />
+                <Package size={20} />
+                Access Inventory
               </button>
             </div>
           ) : (

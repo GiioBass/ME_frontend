@@ -6,10 +6,15 @@ interface GameTerminalProps {
 }
 
 const GameTerminal: React.FC<GameTerminalProps> = ({ history }) => {
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+                top: scrollRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     }, [history]);
 
     return (
@@ -29,14 +34,13 @@ const GameTerminal: React.FC<GameTerminalProps> = ({ history }) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 min-h-0 scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-transparent pr-2 pb-2">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 min-h-0 scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-transparent pr-2 pb-2">
                 {history.map((line, i) => (
                     <div key={i} className={`whitespace-pre-wrap leading-relaxed ${line.startsWith('>') ? 'text-green-300 font-bold opacity-80' : 'text-green-100'}`}>
                         {line.startsWith('>') ? <span className="mr-2 opacity-50">$</span> : ''}
                         {line}
                     </div>
                 ))}
-                <div ref={bottomRef} />
             </div>
 
             {/* Status Indicator for Read Only Mode */}

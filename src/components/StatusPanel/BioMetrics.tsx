@@ -13,10 +13,16 @@ interface BioMetricsProps {
 
 const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats }) => {
     return (
-        <div className="glass-panel rounded-2xl p-6 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex-shrink-0 border-stitch-blue/30">
-            <h2 className="text-sm font-bold mb-4 flex items-center justify-between uppercase tracking-widest text-stitch-cyan border-b border-stitch-blue/40 pb-3">
+        <div className="glass-panel rounded-2xl p-6 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex-shrink-0 border-stitch-blue/30 relative">
+
+            {/* Player Name Display */}
+            <div className="absolute -top-3 left-6 flex items-center gap-2 bg-black px-3 py-1 rounded-md border border-stitch-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.3)] z-10">
+                <div className="w-2 h-2 rounded-full bg-stitch-green animate-pulse"></div>
+                <span className="text-white font-mono text-xs font-bold uppercase tracking-widest">{name}</span>
+            </div>
+
+            <h2 className="text-sm font-bold mt-2 mb-4 flex items-center justify-between uppercase tracking-widest text-stitch-cyan border-b border-stitch-blue/40 pb-3">
                 <span className="flex items-center gap-2 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]"><Activity size={18} /> Bio-Metrics</span>
-                <span className="text-white font-mono text-xs font-bold px-2 py-1 bg-stitch-blue/30 rounded-full">{name}</span>
             </h2>
             <div className="space-y-4">
                 <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 flex flex-col gap-2">
@@ -31,7 +37,7 @@ const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats }) => {
                         <div className={`h-full transition-all duration-500 ${stats.hp < 10 ? 'bg-stitch-orange' : 'bg-stitch-green'}`} style={{ width: `${Math.max(0, Math.min(100, (stats.hp / stats.max_hp) * 100))}%` }}></div>
                     </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center">
                         <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Energy (XP)</div>
