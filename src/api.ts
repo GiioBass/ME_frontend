@@ -29,6 +29,13 @@ export interface CommandResponse {
             z: number;
         };
     };
+    time: {
+        total_ticks: number;
+        day: number;
+        hour: number;
+        minute: number;
+        is_night: boolean;
+    };
 }
 
 export const sendCommand = async (playerId: string, command: string): Promise<CommandResponse> => {

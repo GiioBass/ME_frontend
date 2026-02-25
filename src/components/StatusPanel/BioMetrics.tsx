@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, Sun, Moon } from 'lucide-react';
 
 interface BioMetricsProps {
     name: string;
@@ -9,9 +9,19 @@ interface BioMetricsProps {
         xp: number;
         strength: number;
     };
+    time?: {
+        total_ticks: number;
+        day: number;
+        hour: number;
+        minute: number;
+        is_night: boolean;
+    };
 }
 
-const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats }) => {
+const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time }) => {
+    const formattedHour = time?.hour.toString().padStart(2, '0') || '00';
+    const formattedMin = time?.minute.toString().padStart(2, '0') || '00';
+
     return (
         <div className="glass-panel rounded-2xl p-6 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex-shrink-0 border-stitch-blue/30 relative">
 
@@ -23,6 +33,15 @@ const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats }) => {
 
             <h2 className="text-sm font-bold mt-2 mb-4 flex items-center justify-between uppercase tracking-widest text-stitch-cyan border-b border-stitch-blue/40 pb-3">
                 <span className="flex items-center gap-2 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]"><Activity size={18} /> Bio-Metrics</span>
+                {time && (
+                    <span className={`text-xs ml-auto flex items-center gap-2 font-mono ${time.is_night ? 'text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)]' : 'text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]'}`}>
+                        <span className="text-slate-400 font-sans tracking-tight">DAY {time.day}</span>
+                        <span className="bg-black/40 px-2 py-0.5 rounded flex items-center gap-1.5 border border-white/10">
+                            {time.is_night ? <Moon size={12} className="text-indigo-400" /> : <Sun size={12} className="text-yellow-500" />}
+                            {formattedHour}:{formattedMin}
+                        </span>
+                    </span>
+                )}
             </h2>
             <div className="space-y-4">
                 <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 flex flex-col gap-2">

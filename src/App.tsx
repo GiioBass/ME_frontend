@@ -109,6 +109,7 @@ function App() {
               <BioMetrics
                 name={gameState.player.name}
                 stats={gameState.player.stats}
+                time={gameState.time}
               />
               <button
                 onClick={() => setIsInventoryOpen(true)}
