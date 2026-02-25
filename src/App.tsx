@@ -12,7 +12,11 @@ function App() {
     handleLogin,
     handleRegister,
     handleLogout,
-    handleCommand
+    handleCommand,
+    handleEquip,
+    handleUnequip,
+    handleDrop,
+    handleScout
   } = useGameEngine();
 
   if (isCheckingSession) {
@@ -33,6 +37,10 @@ function App() {
       history={history}
       onCommand={handleCommand}
       onLogout={handleLogout}
+      onEquip={handleEquip}
+      onUnequip={handleUnequip}
+      onDrop={handleDrop}
+      onScout={handleScout}
     />
   );
 }

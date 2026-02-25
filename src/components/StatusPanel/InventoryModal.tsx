@@ -8,10 +8,10 @@ interface InventoryModalProps {
     isOpen: boolean;
     onClose: () => void;
     onEquip: (item: string) => void;
-    onUnequip: (item: string) => void;
+    onDrop: (item: string) => void;
 }
 
-const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onClose, onEquip, onUnequip }) => {
+const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onClose, onEquip, onDrop }) => {
     if (!isOpen) return null;
 
     return (
@@ -56,7 +56,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onCl
                                                 </button>
                                             )}
                                             <button
-                                                onClick={() => onUnequip(itemName)}
+                                                onClick={() => onDrop(itemName)}
                                                 className="text-[10px] bg-red-900/30 hover:bg-red-800/50 px-2 py-1 rounded text-red-200 uppercase tracking-widest transition-colors border border-red-800/50"
                                             >
                                                 Drop

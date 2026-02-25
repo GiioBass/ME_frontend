@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sendCommand, loginPlayer, type CommandResponse } from '../api';
+import { sendCommand, loginPlayer, actionDrop, actionEquip, actionUnequip, actionScout, type CommandResponse } from '../api';
 import axios from 'axios';
 
 export const useGameEngine = () => {
@@ -87,6 +87,38 @@ export const useGameEngine = () => {
         }
     }, [playerId]);
 
+    const executeAction = useCallback(async (actionName: string, actionFn: () => Promise<CommandResponse>) => {
+        if (!playerId) return;
+        try {
+            setHistory(prev => [...prev, `> ${actionName}`]);
+            const res = await actionFn();
+            setGameState(res);
+            const logEntries = [res.message];
+            if (res.location && res.location.description) {
+                logEntries.push(res.location.description);
+            }
+            setHistory(prev => [...prev, ...logEntries]);
+        } catch {
+            setHistory(prev => [...prev, `Error: Failed to execute ${actionName}.`]);
+        }
+    }, [playerId]);
+
+    const handleEquip = useCallback((itemName: string) => {
+        executeAction(`equip ${itemName}`, () => actionEquip(playerId, itemName));
+    }, [playerId, executeAction]);
+
+    const handleUnequip = useCallback((slot: string) => {
+        executeAction(`unequip ${slot}`, () => actionUnequip(playerId, slot));
+    }, [playerId, executeAction]);
+
+    const handleDrop = useCallback((itemName: string) => {
+        executeAction(`drop ${itemName}`, () => actionDrop(playerId, itemName));
+    }, [playerId, executeAction]);
+
+    const handleScout = useCallback(() => {
+        executeAction(`scout`, () => actionScout(playerId));
+    }, [playerId, executeAction]);
+
     return {
         gameState,
         history,
@@ -95,6 +127,10 @@ export const useGameEngine = () => {
         handleLogin,
         handleRegister,
         handleLogout,
-        handleCommand
+        handleCommand,
+        handleEquip,
+        handleUnequip,
+        handleDrop,
+        handleScout
     };
 };

@@ -17,11 +17,12 @@ interface BioMetricsProps {
         minute: number;
         is_night: boolean;
     };
-    weapon?: GameItem;
-    armor?: GameItem;
+    weapon?: GameItem | null;
+    armor?: GameItem | null;
+    onUnequip?: (slot: string) => void;
 }
 
-const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time, weapon, armor }) => {
+const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time, weapon, armor, onUnequip }) => {
     const formattedHour = time?.hour.toString().padStart(2, '0') || '00';
     const formattedMin = time?.minute.toString().padStart(2, '0') || '00';
 
@@ -73,11 +74,15 @@ const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time, weapon, armo
 
                 {/* Equipment Loadout */}
                 <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors hover:bg-black/50 overflow-hidden relative">
+                    <div
+                        className={`bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors overflow-hidden relative ${weapon ? 'hover:bg-red-900/20 cursor-pointer border-red-900/40' : 'hover:bg-black/50'}`}
+                        onClick={() => weapon && onUnequip?.('weapon')}
+                        title={weapon ? "Click to Unequip" : undefined}
+                    >
                         {weapon ? (
                             <>
                                 <div className="absolute inset-0 bg-red-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <Sword size={16} className="text-red-400 mb-1 drop-shadow-md" />
+                                <Sword size={16} className="text-red-400 mb-1 drop-shadow-md group-hover:scale-110 transition-transform" />
                                 <div className="text-slate-300 text-[10px] font-bold truncate w-full px-1">{weapon.name}</div>
                                 <div className="text-red-500/70 text-[8px] uppercase tracking-widest">+ {weapon.bonus || '?'} ATK</div>
                             </>
@@ -89,11 +94,15 @@ const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time, weapon, armo
                         )}
                         <div className={`absolute top-0 right-0 p-1 rounded-bl ${weapon ? 'bg-red-900/40 border-l border-b border-red-800' : 'bg-slate-800/40 border-l border-b border-slate-700/50'}`}></div>
                     </div>
-                    <div className="bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors hover:bg-black/50 overflow-hidden relative">
+                    <div
+                        className={`bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors overflow-hidden relative ${armor ? 'hover:bg-blue-900/20 cursor-pointer border-blue-900/40' : 'hover:bg-black/50'}`}
+                        onClick={() => armor && onUnequip?.('armor')}
+                        title={armor ? "Click to Unequip" : undefined}
+                    >
                         {armor ? (
                             <>
                                 <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <Shield size={16} className="text-stitch-blue mb-1 drop-shadow-md" />
+                                <Shield size={16} className="text-stitch-blue mb-1 drop-shadow-md group-hover:scale-110 transition-transform" />
                                 <div className="text-slate-300 text-[10px] font-bold truncate w-full px-1">{armor.name}</div>
                                 <div className="text-stitch-blue/70 text-[8px] uppercase tracking-widest">+ {armor.bonus || '?'} DEF</div>
                             </>

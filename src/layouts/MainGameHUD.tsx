@@ -13,9 +13,13 @@ interface MainGameHUDProps {
     history: string[];
     onCommand: (cmd: string) => void;
     onLogout: () => void;
+    onEquip: (itemName: string) => void;
+    onUnequip: (slot: string) => void;
+    onDrop: (itemName: string) => void;
+    onScout?: () => void;
 }
 
-const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout }) => {
+const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout }) => {
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
     return (
@@ -55,8 +59,9 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                 name={gameState.player.name}
                                 stats={gameState.player.stats}
                                 time={gameState.time}
-                                weapon={gameState.player.weapon}
-                                armor={gameState.player.armor}
+                                weapon={gameState.player.equipment?.weapon}
+                                armor={gameState.player.equipment?.armor}
+                                onUnequip={onUnequip}
                             />
                             <button
                                 onClick={() => setIsInventoryOpen(true)}
@@ -81,6 +86,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                     name={gameState.location.name}
                                     coordinates={gameState.location.coordinates}
                                     description={gameState.location.description}
+                                    scoutedLocations={gameState.scouted_locations}
+                                    onScout={onScout}
                                 />
 
                                 <div className="flex-1 my-4"></div>
@@ -112,14 +119,10 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                 isOpen={isInventoryOpen}
                 onClose={() => setIsInventoryOpen(false)}
                 onEquip={(item) => {
-                    onCommand(`equip ${item}`);
-                    setIsInventoryOpen(false); // Optionally close after equip
+                    onEquip(item);
                 }}
-                onUnequip={(item) => {
-                    onCommand(`unequip ${item}`); // Note: Backend unequip might not take an item argument depending on implementation, but passing it is safe. We can let the user `drop` it too, but here we trigger unequip.
-                    // Actually, let's implement the drop button we exposed as just `drop` but wait...
-                    // The InventoryModal calls it `Drop`, so let's send `drop ${item}`.
-                    // To be safe: wait! InventoryModal labeled it "Drop", let's bind it to `drop ${item}` explicitly OR rename it to Unequip if we expect it to be equipped items.
+                onDrop={(item) => {
+                    onDrop(item);
                 }}
             />
         </div>
