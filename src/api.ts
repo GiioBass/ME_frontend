@@ -2,6 +2,23 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:8000/api/v1';
 
+export interface GameItem {
+    id?: string;
+    name: string;
+    description?: string;
+    item_type?: string;
+    qty?: number;
+    bonus?: number;
+}
+
+export interface GameEnemy {
+    id: string;
+    name: string;
+    hp: number;
+    max_hp: number;
+    attack: number;
+}
+
 export interface CommandResponse {
     message: string;
     player: {
@@ -13,7 +30,9 @@ export interface CommandResponse {
             strength: number;
             xp: number;
         };
-        inventory: any[];
+        inventory: (GameItem | string)[];
+        weapon?: GameItem;
+        armor?: GameItem;
         current_location_id: string;
     };
     location: {
@@ -21,8 +40,8 @@ export interface CommandResponse {
         name: string;
         description: string;
         exits: Record<string, string>;
-        items: any[];
-        enemies: any[];
+        items: GameItem[];
+        enemies: GameEnemy[];
         coordinates?: {
             x: number;
             y: number;
@@ -47,6 +66,16 @@ export const sendCommand = async (playerId: string, command: string): Promise<Co
         return response.data;
     } catch (error) {
         console.error("API Error", error);
+        throw error;
+    }
+};
+
+export const loginPlayer = async (name: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/login`, { name });
+        return response.data;
+    } catch (error) {
+        console.error("API Login Error", error);
         throw error;
     }
 };

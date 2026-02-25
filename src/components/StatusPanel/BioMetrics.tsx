@@ -1,5 +1,6 @@
 import React from 'react';
-import { Activity, Sun, Moon } from 'lucide-react';
+import { Activity, Sun, Moon, Sword, Shield } from 'lucide-react';
+import { type GameItem } from '../../api';
 
 interface BioMetricsProps {
     name: string;
@@ -16,9 +17,11 @@ interface BioMetricsProps {
         minute: number;
         is_night: boolean;
     };
+    weapon?: GameItem;
+    armor?: GameItem;
 }
 
-const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time }) => {
+const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time, weapon, armor }) => {
     const formattedHour = time?.hour.toString().padStart(2, '0') || '00';
     const formattedMin = time?.minute.toString().padStart(2, '0') || '00';
 
@@ -67,6 +70,43 @@ const BioMetrics: React.FC<BioMetricsProps> = ({ name, stats, time }) => {
                         <div className="text-stitch-magenta font-bold text-xl drop-shadow-[0_0_5px_rgba(217,70,239,0.5)]">{stats.strength}</div>
                     </div>
                 </div>
+
+                {/* Equipment Loadout */}
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors hover:bg-black/50 overflow-hidden relative">
+                        {weapon ? (
+                            <>
+                                <div className="absolute inset-0 bg-red-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <Sword size={16} className="text-red-400 mb-1 drop-shadow-md" />
+                                <div className="text-slate-300 text-[10px] font-bold truncate w-full px-1">{weapon.name}</div>
+                                <div className="text-red-500/70 text-[8px] uppercase tracking-widest">+ {weapon.bonus || '?'} ATK</div>
+                            </>
+                        ) : (
+                            <>
+                                <Sword size={16} className="text-slate-600 mb-1" />
+                                <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">No Weapon</div>
+                            </>
+                        )}
+                        <div className={`absolute top-0 right-0 p-1 rounded-bl ${weapon ? 'bg-red-900/40 border-l border-b border-red-800' : 'bg-slate-800/40 border-l border-b border-slate-700/50'}`}></div>
+                    </div>
+                    <div className="bg-black/30 p-3 rounded-xl border flex flex-col items-center justify-center text-center group transition-colors hover:bg-black/50 overflow-hidden relative">
+                        {armor ? (
+                            <>
+                                <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <Shield size={16} className="text-stitch-blue mb-1 drop-shadow-md" />
+                                <div className="text-slate-300 text-[10px] font-bold truncate w-full px-1">{armor.name}</div>
+                                <div className="text-stitch-blue/70 text-[8px] uppercase tracking-widest">+ {armor.bonus || '?'} DEF</div>
+                            </>
+                        ) : (
+                            <>
+                                <Shield size={16} className="text-slate-600 mb-1" />
+                                <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">No Armor</div>
+                            </>
+                        )}
+                        <div className={`absolute top-0 right-0 p-1 rounded-bl ${armor ? 'bg-blue-900/40 border-l border-b border-blue-800' : 'bg-slate-800/40 border-l border-b border-slate-700/50'}`}></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

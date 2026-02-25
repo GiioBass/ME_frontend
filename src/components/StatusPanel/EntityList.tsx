@@ -1,9 +1,11 @@
 import React from 'react';
 import { Backpack, Skull } from 'lucide-react';
 
+import { type GameItem, type GameEnemy } from '../../api';
+
 interface EntityListProps {
-    items: any[];
-    enemies: any[];
+    items: GameItem[];
+    enemies: GameEnemy[];
     onTake: (itemName: string) => void;
     onAttack: (enemyName: string) => void;
 }
@@ -17,7 +19,7 @@ const EntityList: React.FC<EntityListProps> = ({ items, enemies, onTake, onAttac
                         <Backpack size={14} /> Detected Items
                     </span>
                     <div className="flex flex-wrap gap-3">
-                        {items.map((item: any, idx: number) => (
+                        {items.map((item, idx: number) => (
                             <button key={idx}
                                 className="group flex items-center gap-2 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-500 hover:text-yellow-200 px-4 py-2 rounded border border-yellow-800/30 hover:border-yellow-500/50 transition-all shadow-md flex-grow justify-between"
                                 onClick={() => onTake(item.name)}
@@ -36,7 +38,7 @@ const EntityList: React.FC<EntityListProps> = ({ items, enemies, onTake, onAttac
                         Hostiles Detected
                     </span>
                     <div className="flex flex-col gap-3">
-                        {enemies.map((enemy: any, idx: number) => (
+                        {enemies.map((enemy, idx: number) => (
                             <div key={idx} className="flex flex-col gap-2 text-xs text-red-300 bg-red-950/30 p-3 rounded border border-red-900/30">
                                 <div className="flex justify-between items-center">
                                     <span className="font-bold text-sm tracking-wide">{enemy.name}</span>

@@ -1,13 +1,17 @@
 import React from 'react';
 import { Package, X } from 'lucide-react';
 
+import { type GameItem } from '../../api';
+
 interface InventoryModalProps {
-    inventory: any[];
+    inventory: (GameItem | string)[];
     isOpen: boolean;
     onClose: () => void;
+    onEquip: (item: string) => void;
+    onUnequip: (item: string) => void;
 }
 
-const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onClose }) => {
+const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onClose, onEquip, onUnequip }) => {
     if (!isOpen) return null;
 
     return (
@@ -25,21 +29,39 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, isOpen, onCl
                 <div className="p-6 min-h-[300px] max-h-[60vh] overflow-y-auto bg-black/40">
                     {inventory && inventory.length > 0 ? (
                         <div className="grid grid-cols-1 gap-3">
-                            {inventory.map((item: any, idx: number) => {
+                            {inventory.map((item, idx: number) => {
                                 const itemName = typeof item === 'string' ? item : item.name || 'Unknown Object';
                                 const itemQty = typeof item === 'string' ? 1 : item.qty || 1;
+                                const isEquippable = typeof item !== 'string' && (item.item_type === 'weapon' || item.item_type === 'armor');
+
                                 return (
-                                    <div key={idx} className="bg-green-900/10 border border-green-800/50 p-4 rounded-lg flex items-center justify-between hover:bg-green-900/20 transition-colors cursor-pointer group">
+                                    <div key={idx} className="bg-green-900/10 border border-green-800/50 p-4 rounded-lg flex items-center justify-between hover:bg-green-900/20 transition-colors group">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-green-900/30 rounded flex items-center justify-center border border-green-700/50 group-hover:border-green-500">
                                                 <Package size={20} className="text-green-400" />
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-green-300 text-lg">{itemName}</span>
-                                                <span className="text-[10px] text-green-600 uppercase tracking-widest">Qty: {itemQty}</span>
+                                                <span className="text-[10px] text-green-600 uppercase tracking-widest">Qty: {itemQty} {isEquippable && typeof item !== 'string' ? `| ${item.item_type}` : ''}</span>
                                             </div>
                                         </div>
-                                        <span className="text-xs bg-green-900/50 px-2 py-1 rounded text-green-200 opacity-0 group-hover:opacity-100 transition-opacity">INSPECT</span>
+
+                                        <div className="flex gap-2">
+                                            {isEquippable && (
+                                                <button
+                                                    onClick={() => onEquip(itemName)}
+                                                    className="text-[10px] bg-green-700/30 hover:bg-green-600/50 px-2 py-1 rounded text-green-100 uppercase tracking-widest transition-colors font-bold border border-green-600/50"
+                                                >
+                                                    Equip
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => onUnequip(itemName)}
+                                                className="text-[10px] bg-red-900/30 hover:bg-red-800/50 px-2 py-1 rounded text-red-200 uppercase tracking-widest transition-colors border border-red-800/50"
+                                            >
+                                                Drop
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             })}
