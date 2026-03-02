@@ -139,6 +139,10 @@ export const useGameEngine = () => {
         await executeAction(`fill ${itemName}`, () => actionFill(playerId, itemName));
     }, [playerId, executeAction]);
 
+    const handleDrink = useCallback(async () => {
+        await handleCommand("drink");
+    }, [handleCommand]);
+
     return {
         gameState,
         history,
@@ -156,6 +160,7 @@ export const useGameEngine = () => {
         handleStore,
         handleRetrieve,
         handleConsume,
-        handleFill
+        handleFill,
+        handleDrink
     };
 };

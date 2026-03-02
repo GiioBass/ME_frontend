@@ -21,7 +21,8 @@ function App() {
     handleStore,
     handleRetrieve,
     handleConsume,
-    handleFill
+    handleFill,
+    handleDrink
   } = useGameEngine();
 
   if (isCheckingSession) {
@@ -51,6 +52,7 @@ function App() {
       onRetrieve={handleRetrieve}
       onConsume={handleConsume}
       onFill={handleFill}
+      onDrink={handleDrink}
     />
   );
 }

@@ -24,9 +24,10 @@ interface MainGameHUDProps {
     onRetrieve?: (itemName: string) => void;
     onConsume?: (itemName: string) => void;
     onFill?: (itemName: string) => void;
+    onDrink?: () => void;
 }
 
-const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout, onTravel, onStore, onRetrieve, onConsume, onFill }) => {
+const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout, onTravel, onStore, onRetrieve, onConsume, onFill, onDrink }) => {
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
     const [isWaypointsOpen, setIsWaypointsOpen] = useState(false);
     const [isCampChestOpen, setIsCampChestOpen] = useState(false);
@@ -125,6 +126,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                     scoutedLocations={gameState.scouted_locations}
                                     onScout={onScout}
                                     isDark={gameState.location.is_dark}
+                                    availableActions={gameState.available_actions || []}
+                                    onDrink={onDrink}
                                 />
 
                                 <div className="flex-1 my-4"></div>

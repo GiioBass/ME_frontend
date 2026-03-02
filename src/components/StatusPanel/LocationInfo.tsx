@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Map, Radio } from 'lucide-react';
+import { Map, Radio, Activity } from 'lucide-react';
 import RadarPanel from './RadarPanel';
 
 interface LocationInfoProps {
@@ -13,9 +13,11 @@ interface LocationInfoProps {
     scoutedLocations?: { name: string; distance: number; direction: string }[];
     onScout?: () => void;
     isDark?: boolean;
+    availableActions?: string[];
+    onDrink?: () => void;
 }
 
-const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout, isDark }) => {
+const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout, isDark, availableActions = [], onDrink }) => {
     const [isScanning, setIsScanning] = useState(false);
 
     const handleScout = () => {
@@ -58,6 +60,16 @@ const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, descript
                 >
                     <Radio size={16} className={isScanning ? "animate-pulse text-white" : ""} />
                     {isScanning ? "Scanning Sector..." : "Pulse Radar"}
+                </button>
+            )}
+
+            {onDrink && availableActions.includes("drink") && (
+                <button
+                    onClick={onDrink}
+                    className="w-full mt-2 glass-panel-interactive py-2 rounded-xl flex items-center justify-center gap-2 text-blue-400 hover:text-white text-xs font-bold tracking-widest uppercase border-blue-500/30 hover:border-blue-400 transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]"
+                >
+                    <Activity size={16} />
+                    Drink from Source
                 </button>
             )}
 
