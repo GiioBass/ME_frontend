@@ -12,9 +12,10 @@ interface LocationInfoProps {
     description: string;
     scoutedLocations?: { name: string; distance: number; direction: string }[];
     onScout?: () => void;
+    isDark?: boolean;
 }
 
-const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout }) => {
+const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout, isDark }) => {
     const [isScanning, setIsScanning] = useState(false);
 
     const handleScout = () => {
@@ -37,9 +38,17 @@ const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, descript
                 </div>
                 {name && <span className="text-green-200 text-xs font-mono ml-6">{name}</span>}
             </h2>
-            <p className="mb-6 text-green-100 leading-relaxed font-serif tracking-wide border-l-2 border-green-700/50 pl-4 italic bg-green-900/5 py-3 rounded-r text-base">
-                "{description}"
-            </p>
+            <div className={`relative transition-all duration-700 ${isDark ? 'grayscale-[0.8] opacity-60' : ''}`}>
+                <p className={`mb-6 leading-relaxed font-serif tracking-wide border-l-2 pl-4 italic py-3 rounded-r text-base transition-colors duration-700 ${isDark ? 'border-indigo-900 bg-indigo-950/20 text-indigo-300' : 'border-green-700/50 bg-green-900/5 text-green-100'}`}>
+                    "{description}"
+                </p>
+                {isDark && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/60 border border-indigo-500/30 text-[10px] uppercase tracking-tighter text-indigo-400 font-bold animate-pulse">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.8)]"></div>
+                        Low Light Sector
+                    </div>
+                )}
+            </div>
 
             {onScout && (
                 <button

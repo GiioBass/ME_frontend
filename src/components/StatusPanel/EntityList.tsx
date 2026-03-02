@@ -11,22 +11,47 @@ interface EntityListProps {
 }
 
 const EntityList: React.FC<EntityListProps> = ({ items, enemies, onTake, onAttack }) => {
+    // Group ground items by name to display stacks
+    const groupedItems = React.useMemo(() => {
+        if (!items) return [];
+        const groups: Record<string, any> = {};
+        items.forEach(item => {
+            if (!groups[item.name]) {
+                groups[item.name] = { ...item, qty: 0 };
+            }
+            groups[item.name].qty++;
+        });
+        return Object.values(groups);
+    }, [items]);
+
     return (
         <div className="mt-2 space-y-4 flex-shrink-0">
-            {items && items.length > 0 && (
+            {groupedItems && groupedItems.length > 0 && (
                 <div className="bg-yellow-950/10 p-3 rounded-lg border border-yellow-900/20">
                     <span className="text-yellow-600 font-bold block mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
                         <Backpack size={14} /> Detected Items
                     </span>
-                    <div className="flex flex-wrap gap-3">
-                        {items.map((item, idx: number) => (
-                            <button key={idx}
-                                className="group flex items-center gap-2 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-500 hover:text-yellow-200 px-4 py-2 rounded border border-yellow-800/30 hover:border-yellow-500/50 transition-all shadow-md flex-grow justify-between"
-                                onClick={() => onTake(item.name)}
-                            >
-                                <span className="font-bold">{item.name}</span>
-                                <span className="text-[10px] bg-yellow-900/50 px-1.5 py-0.5 rounded text-yellow-200 border border-yellow-700/50">TAKE</span>
-                            </button>
+                    <div className="flex flex-col gap-3">
+                        {groupedItems.map((item, idx: number) => (
+                            <div key={idx} className="group flex items-center gap-2 bg-yellow-900/20 text-yellow-500 px-4 py-2 rounded border border-yellow-800/30 flex-grow justify-between">
+                                <span className="font-bold">{item.name} {item.qty > 1 ? `(x${item.qty})` : ''}</span>
+                                <div className="flex gap-2">
+                                    <button
+                                        className="text-[10px] bg-yellow-900/50 hover:bg-yellow-700/80 hover:text-white transition-colors px-2 py-1 rounded text-yellow-200 border border-yellow-700/50"
+                                        onClick={() => onTake(item.name)}
+                                    >
+                                        TAKE 1
+                                    </button>
+                                    {item.qty > 1 && (
+                                        <button
+                                            className="text-[10px] bg-yellow-800/60 hover:bg-yellow-600/80 hover:text-white transition-colors px-2 py-1 rounded text-yellow-100 border border-yellow-500/50"
+                                            onClick={() => onTake(`${item.name} ${item.qty}`)}
+                                        >
+                                            TAKE ALL
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>

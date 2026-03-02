@@ -6,6 +6,8 @@ import LocationInfo from '../components/StatusPanel/LocationInfo';
 import NavigationGrid from '../components/StatusPanel/NavigationGrid';
 import EntityList from '../components/StatusPanel/EntityList';
 import InventoryModal from '../components/StatusPanel/InventoryModal';
+import WaypointsModal from '../components/StatusPanel/WaypointsModal';
+import CampChestModal from '../components/StatusPanel/CampChestModal';
 import type { CommandResponse } from '../api';
 
 interface MainGameHUDProps {
@@ -17,10 +19,31 @@ interface MainGameHUDProps {
     onUnequip: (slot: string) => void;
     onDrop: (itemName: string) => void;
     onScout?: () => void;
+    onTravel?: (waypointName: string) => void;
+    onStore?: (itemName: string) => void;
+    onRetrieve?: (itemName: string) => void;
+    onConsume?: (itemName: string) => void;
+    onFill?: (itemName: string) => void;
 }
 
-const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout }) => {
+const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout, onTravel, onStore, onRetrieve, onConsume, onFill }) => {
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+    const [isWaypointsOpen, setIsWaypointsOpen] = useState(false);
+    const [isCampChestOpen, setIsCampChestOpen] = useState(false);
+    const [isTraveling, setIsTraveling] = useState(false);
+
+    const isAtCamp = gameState?.location?.id && Object.values(gameState?.player?.waypoints || {}).includes(gameState.location.id);
+
+    const handleTravel = (waypointName: string) => {
+        if (!onTravel) return;
+        setIsTraveling(true);
+        // Simulate travel delay
+        setTimeout(() => {
+            onTravel(waypointName);
+            setIsTraveling(false);
+            setIsWaypointsOpen(false);
+        }, 1200);
+    }
 
     return (
         <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-x-hidden overflow-y-auto flex justify-center p-4 md:p-8 relative">
@@ -63,14 +86,27 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                 armor={gameState.player.equipment?.armor}
                                 onUnequip={onUnequip}
                             />
-                            <button
-                                onClick={() => setIsInventoryOpen(true)}
-                                className="w-full glass-panel-interactive py-3 rounded-xl flex items-center justify-center gap-3 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.1)]"
-                                title="Open Storage Unit"
-                            >
-                                <Package size={20} />
-                                Access Inventory
-                            </button>
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={() => setIsInventoryOpen(true)}
+                                    className="w-full glass-panel-interactive py-3 rounded-xl flex items-center justify-center gap-3 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                                    title="Open Storage Unit"
+                                >
+                                    <Package size={20} />
+                                    Access Inventory
+                                </button>
+
+                                {isAtCamp && (
+                                    <button
+                                        onClick={() => setIsCampChestOpen(true)}
+                                        className="w-full glass-panel-interactive py-2 rounded-xl flex items-center justify-center gap-2 text-green-400 hover:text-white font-bold tracking-widest uppercase border-green-500/30 hover:border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)] transition-colors text-sm"
+                                        title="Open Camp Chest"
+                                    >
+                                        <Package size={16} />
+                                        Camp Chest
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="glass-panel rounded-2xl p-6 flex-shrink-0 flex items-center justify-center h-24 text-stitch-orange/70 animate-pulse text-sm uppercase tracking-widest border-stitch-orange/30">
@@ -88,6 +124,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                     description={gameState.location.description}
                                     scoutedLocations={gameState.scouted_locations}
                                     onScout={onScout}
+                                    isDark={gameState.location.is_dark}
                                 />
 
                                 <div className="flex-1 my-4"></div>
@@ -103,6 +140,13 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                     onTake={(item) => onCommand(`take ${item}`)}
                                     onAttack={(enemy) => onCommand(`attack ${enemy}`)}
                                 />
+
+                                <button
+                                    onClick={() => setIsWaypointsOpen(true)}
+                                    className="w-full mt-4 glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-2 text-stitch-blue hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-lightBlue shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-colors"
+                                >
+                                    Fast Travel Network
+                                </button>
                             </>
                         ) : (
                             <div className="flex-1 flex items-center justify-center text-stitch-cyan/50 italic font-mono text-sm">
@@ -116,6 +160,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
             {/* Inventory Modal */}
             <InventoryModal
                 inventory={gameState?.player?.inventory || []}
+                currentWeight={gameState?.player?.current_weight || 0}
+                maxWeight={gameState?.player?.stats?.max_weight || 0}
                 isOpen={isInventoryOpen}
                 onClose={() => setIsInventoryOpen(false)}
                 onEquip={(item) => {
@@ -124,6 +170,29 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                 onDrop={(item) => {
                     onDrop(item);
                 }}
+                onConsume={onConsume ? ((item) => onConsume(item)) : undefined}
+                onFill={onFill ? ((item) => onFill(item)) : undefined}
+                availableActions={gameState?.available_actions || []}
+            />
+
+            <WaypointsModal
+                waypoints={gameState?.player?.waypoints || {}}
+                isOpen={isWaypointsOpen}
+                isTraveling={isTraveling}
+                onClose={() => setIsWaypointsOpen(false)}
+                onTravel={handleTravel}
+                onCreateCamp={(campName) => onCommand(`camp ${campName}`)}
+            />
+
+            <CampChestModal
+                isOpen={isCampChestOpen}
+                onClose={() => setIsCampChestOpen(false)}
+                inventory={gameState?.player?.inventory || []}
+                chest={gameState?.location?.camp_storage || []}
+                currentWeight={gameState?.player?.current_weight || 0}
+                maxWeight={gameState?.player?.stats?.max_weight || 0}
+                onStore={onStore || (() => { })}
+                onRetrieve={onRetrieve || (() => { })}
             />
         </div>
     );

@@ -10,6 +10,7 @@ export interface GameItem {
     qty?: number;
     bonus?: number;
     equip_slot?: string;
+    is_light_source?: boolean;
 }
 
 export interface GameEnemy {
@@ -33,9 +34,14 @@ export interface CommandResponse {
         stats: {
             hp: number;
             max_hp: number;
+            hunger: number;
+            thirst: number;
             strength: number;
             xp: number;
+            max_weight: number;
         };
+        current_weight: number;
+        waypoints: Record<string, string>;
         inventory: GameItem[];
         equipment: Equipment;
         current_location_id: string;
@@ -46,12 +52,14 @@ export interface CommandResponse {
         description: string;
         exits: Record<string, string>;
         items: GameItem[];
+        camp_storage: GameItem[];
         enemies: GameEnemy[];
         coordinates?: {
             x: number;
             y: number;
             z: number;
         };
+        is_dark?: boolean;
     };
     time: {
         total_ticks: number;
@@ -65,6 +73,7 @@ export interface CommandResponse {
         distance: number;
         direction: string;
     }[];
+    available_actions?: string[];
 }
 
 export const sendCommand = async (playerId: string, command: string): Promise<CommandResponse> => {
@@ -137,6 +146,84 @@ export const actionScout = async (playerId: string): Promise<CommandResponse> =>
         return response.data;
     } catch (error) {
         console.error("API Scout Error", error);
+        throw error;
+    }
+};
+
+export const actionCamp = async (playerId: string, campName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/camp`, {
+            player_id: playerId,
+            camp_name: campName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Camp Error", error);
+        throw error;
+    }
+};
+
+export const actionTravel = async (playerId: string, waypointName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/travel`, {
+            player_id: playerId,
+            waypoint_name: waypointName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Travel Error", error);
+        throw error;
+    }
+};
+
+export const actionStore = async (playerId: string, itemName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/store`, {
+            player_id: playerId,
+            item_name: itemName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Store Error", error);
+        throw error;
+    }
+};
+
+export const actionRetrieve = async (playerId: string, itemName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/retrieve`, {
+            player_id: playerId,
+            item_name: itemName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Retrieve Error", error);
+        throw error;
+    }
+};
+
+export const actionConsume = async (playerId: string, itemName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/consume`, {
+            player_id: playerId,
+            item_name: itemName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Consume Error", error);
+        throw error;
+    }
+};
+
+export const actionFill = async (playerId: string, itemName: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/action/fill`, {
+            player_id: playerId,
+            item_name: itemName
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Fill Error", error);
         throw error;
     }
 };

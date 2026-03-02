@@ -16,7 +16,12 @@ function App() {
     handleEquip,
     handleUnequip,
     handleDrop,
-    handleScout
+    handleScout,
+    handleTravel,
+    handleStore,
+    handleRetrieve,
+    handleConsume,
+    handleFill
   } = useGameEngine();
 
   if (isCheckingSession) {
@@ -41,6 +46,11 @@ function App() {
       onUnequip={handleUnequip}
       onDrop={handleDrop}
       onScout={handleScout}
+      onTravel={handleTravel}
+      onStore={handleStore}
+      onRetrieve={handleRetrieve}
+      onConsume={handleConsume}
+      onFill={handleFill}
     />
   );
 }

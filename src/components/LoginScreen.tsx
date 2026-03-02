@@ -27,7 +27,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
             }
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.detail || "Connection failed. Database link severed.");
+                const detail = err.response?.data?.detail;
+                if (detail && detail.message) {
+                    setError(detail.message);
+                } else if (typeof detail === 'string') {
+                    setError(detail);
+                } else {
+                    setError("Connection failed. Server uncreachable.");
+                }
             } else {
                 setError("An unexpected error occurred.");
             }

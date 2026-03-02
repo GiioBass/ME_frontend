@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sendCommand, loginPlayer, actionDrop, actionEquip, actionUnequip, actionScout, type CommandResponse } from '../api';
+import { sendCommand, loginPlayer, actionDrop, actionEquip, actionUnequip, actionScout, actionTravel, actionStore, actionRetrieve, actionConsume, actionFill, type CommandResponse } from '../api';
 import axios from 'axios';
 
 export const useGameEngine = () => {
@@ -119,6 +119,26 @@ export const useGameEngine = () => {
         executeAction(`scout`, () => actionScout(playerId));
     }, [playerId, executeAction]);
 
+    const handleTravel = useCallback((waypointName: string) => {
+        executeAction(`travel ${waypointName}`, () => actionTravel(playerId, waypointName));
+    }, [playerId, executeAction]);
+
+    const handleStore = useCallback((itemName: string) => {
+        executeAction(`store ${itemName}`, () => actionStore(playerId, itemName));
+    }, [playerId, executeAction]);
+
+    const handleRetrieve = useCallback(async (itemName: string) => {
+        await executeAction(`retrieve ${itemName}`, () => actionRetrieve(playerId, itemName));
+    }, [playerId, executeAction]);
+
+    const handleConsume = useCallback(async (itemName: string) => {
+        await executeAction(`consume ${itemName}`, () => actionConsume(playerId, itemName));
+    }, [playerId, executeAction]);
+
+    const handleFill = useCallback(async (itemName: string) => {
+        await executeAction(`fill ${itemName}`, () => actionFill(playerId, itemName));
+    }, [playerId, executeAction]);
+
     return {
         gameState,
         history,
@@ -131,6 +151,11 @@ export const useGameEngine = () => {
         handleEquip,
         handleUnequip,
         handleDrop,
-        handleScout
+        handleScout,
+        handleTravel,
+        handleStore,
+        handleRetrieve,
+        handleConsume,
+        handleFill
     };
 };

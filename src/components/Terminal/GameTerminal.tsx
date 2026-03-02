@@ -35,12 +35,23 @@ const GameTerminal: React.FC<GameTerminalProps> = ({ history }) => {
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 min-h-0 scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-transparent pr-2 pb-2">
-                {history.map((line, i) => (
-                    <div key={i} className={`whitespace-pre-wrap leading-relaxed ${line.startsWith('>') ? 'text-green-300 font-bold opacity-80' : 'text-green-100'}`}>
-                        {line.startsWith('>') ? <span className="mr-2 opacity-50">$</span> : ''}
-                        {line}
-                    </div>
-                ))}
+                {history.map((line, i) => {
+                    let colorClass = 'text-green-100';
+                    if (line.startsWith('>')) {
+                        colorClass = 'text-green-300 font-bold opacity-80';
+                    } else if (line.includes('[TRAP]')) {
+                        colorClass = 'text-red-400 font-bold drop-shadow-[0_0_8px_rgba(244,63,94,0.4)] animate-pulse';
+                    } else if (line.includes('[NIGHT]') || line.includes('[DARK]')) {
+                        colorClass = 'text-indigo-300 opacity-90 italic';
+                    }
+
+                    return (
+                        <div key={i} className={`whitespace-pre-wrap leading-relaxed ${colorClass}`}>
+                            {line.startsWith('>') ? <span className="mr-2 opacity-50">$</span> : ''}
+                            {line}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Status Indicator for Read Only Mode */}

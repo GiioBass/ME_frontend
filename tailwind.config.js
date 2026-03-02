@@ -4,6 +4,14 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    'bg-stitch-orange',
+    'bg-stitch-green',
+    'bg-yellow-400',
+    'text-stitch-orange',
+    'text-stitch-green',
+    'text-yellow-400'
+  ],
   theme: {
     extend: {
       colors: {
