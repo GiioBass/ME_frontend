@@ -130,18 +130,20 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                                     onDrink={onDrink}
                                 />
 
-                                <div className="flex-1 my-4"></div>
+                                <div className="mt-4 overflow-y-auto pr-1">
+                                    <EntityList
+                                        items={gameState.location.items}
+                                        enemies={gameState.location.enemies}
+                                        onTake={(item) => onCommand(`take ${item}`)}
+                                        onAttack={(enemy) => onCommand(`attack ${enemy}`)}
+                                    />
+                                </div>
+
+                                <div className="flex-1"></div>
 
                                 <NavigationGrid
                                     exits={gameState.location.exits}
                                     onMove={onCommand}
-                                />
-
-                                <EntityList
-                                    items={gameState.location.items}
-                                    enemies={gameState.location.enemies}
-                                    onTake={(item) => onCommand(`take ${item}`)}
-                                    onAttack={(enemy) => onCommand(`attack ${enemy}`)}
                                 />
 
                                 <button

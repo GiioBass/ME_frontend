@@ -19,6 +19,7 @@ interface LocationInfoProps {
 
 const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout, isDark, availableActions = [], onDrink }) => {
     const [isScanning, setIsScanning] = useState(false);
+    const [isRadarVisible, setIsRadarVisible] = useState(true);
 
     const handleScout = () => {
         if (onScout) {
@@ -73,8 +74,27 @@ const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, descript
                 </button>
             )}
 
-            {scoutedLocations !== undefined && (
-                <RadarPanel locations={scoutedLocations} />
+            {scoutedLocations && scoutedLocations.length > 0 && (
+                <div className="mt-4 border-t border-green-900/30 pt-4">
+                    <button
+                        onClick={() => setIsRadarVisible(!isRadarVisible)}
+                        className="w-full flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-green-500/60 hover:text-green-400 mb-2 transition-colors px-1"
+                    >
+                        <span className="flex items-center gap-2">
+                            <Radio size={12} className={isScanning ? "animate-ping" : ""} />
+                            Radar Feed
+                        </span>
+                        <span className="font-mono text-[8px] opacity-40">
+                            {isRadarVisible ? "[ HIDE ]" : "[ SHOW ]"}
+                        </span>
+                    </button>
+
+                    {isRadarVisible && (
+                        <div className="animate-in slide-in-from-top-2 duration-300">
+                            <RadarPanel locations={scoutedLocations} />
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
