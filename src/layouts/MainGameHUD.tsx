@@ -8,6 +8,7 @@ import EntityList from '../components/StatusPanel/EntityList';
 import InventoryModal from '../components/StatusPanel/InventoryModal';
 import WaypointsModal from '../components/StatusPanel/WaypointsModal';
 import CampChestModal from '../components/StatusPanel/CampChestModal';
+import { CommandListModal } from '../components/Modals/CommandListModal';
 import type { CommandResponse } from '../api';
 
 interface MainGameHUDProps {
@@ -31,6 +32,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
     const [isWaypointsOpen, setIsWaypointsOpen] = useState(false);
     const [isCampChestOpen, setIsCampChestOpen] = useState(false);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isTraveling, setIsTraveling] = useState(false);
 
     const isAtCamp = gameState?.location?.id && Object.values(gameState?.player?.waypoints || {}).includes(gameState.location.id);
@@ -57,7 +59,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
             <div className="w-full max-w-7xl h-auto min-h-full md:h-full md:max-h-[95vh] flex flex-col md:flex-row gap-6 relative z-20 mx-auto">
 
                 {/* Main Terminal Output */}
-                <GameTerminal history={history} />
+                <GameTerminal history={history} onCommand={onCommand} onShowHelp={() => setIsHelpOpen(true)} />
 
                 {/* Side Panel (HUD) */}
                 <div className="w-full md:w-[450px] flex flex-col gap-6 h-full overflow-hidden">
@@ -67,13 +69,15 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                         <h1 className="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
                             <span className="text-white"> Mystic Explorers</span>
                         </h1>
-                        <button
-                            onClick={onLogout}
-                            className="text-stitch-cyan/50 hover:text-stitch-orange transition-colors p-2"
-                            title="Disconnect from Link"
-                        >
-                            <Power size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={onLogout}
+                                className="text-stitch-cyan/50 hover:text-stitch-orange transition-colors p-2"
+                                title="Disconnect from Link"
+                            >
+                                <Power size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Stats & Actions */}
@@ -198,6 +202,11 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                 maxWeight={gameState?.player?.stats?.max_weight || 0}
                 onStore={onStore || (() => { })}
                 onRetrieve={onRetrieve || (() => { })}
+            />
+
+            <CommandListModal
+                isOpen={isHelpOpen}
+                onClose={() => setIsHelpOpen(false)}
             />
         </div>
     );

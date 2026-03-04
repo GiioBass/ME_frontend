@@ -32,7 +32,9 @@ export const useGameEngine = () => {
                     });
                 } catch {
                     localStorage.removeItem('me_player_id');
+                    localStorage.removeItem('me_game_history');
                     setPlayerId('');
+                    setHistory(["Welcome to Mystic Explorers. Type 'start' or 'help' to connect."]);
                 }
             }
             setIsCheckingSession(false);
@@ -67,6 +69,11 @@ export const useGameEngine = () => {
 
     const handleCommand = useCallback(async (cmd: string) => {
         if (!cmd.trim()) return;
+        if (cmd.toLowerCase() === 'clear') {
+            setHistory(["Welcome to Mystic Explorers. Type 'start' or 'help' to connect."]);
+            return;
+        }
+
         if (!playerId) {
             setHistory(prev => [...prev, "Error: Not connected to server."]);
             return;

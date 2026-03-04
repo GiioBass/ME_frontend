@@ -227,3 +227,33 @@ export const actionFill = async (playerId: string, itemName: string): Promise<Co
         throw error;
     }
 };
+export const actionRest = async (playerId: string): Promise<CommandResponse> => {
+    try {
+        const response = await axios.post(`${API_URL}/command`, {
+            player_id: playerId,
+            command: "rest"
+        });
+        return response.data;
+    } catch (error) {
+        console.error("API Rest Error", error);
+        throw error;
+    }
+};
+
+export interface CommandHelp {
+    command: string;
+    alias?: string;
+    description: string;
+    usage: string;
+    category: string;
+}
+
+export const getCommands = async (): Promise<CommandHelp[]> => {
+    try {
+        const response = await axios.get(`${API_URL}/commands`);
+        return response.data;
+    } catch (error) {
+        console.error("API GetCommands Error", error);
+        throw error;
+    }
+};
