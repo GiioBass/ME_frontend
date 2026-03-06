@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sendCommand, loginPlayer, actionDrop, actionEquip, actionUnequip, actionScout, actionTravel, actionStore, actionRetrieve, actionConsume, actionFill, type CommandResponse } from '../api';
+import { sendCommand, loginPlayer, actionDrop, actionEquip, actionUnequip, actionScout, actionTravel, actionStore, actionRetrieve, actionConsume, actionFill, type CommandResponse, API_URL } from '../api';
 import axios from 'axios';
 
 export const useGameEngine = () => {
@@ -52,7 +52,7 @@ export const useGameEngine = () => {
     };
 
     const handleRegister = async (name: string) => {
-        const res = await axios.post(`http://localhost:8000/api/v1/start?name=${name}`);
+        const res = await axios.post(`${API_URL}/start?name=${name}`);
         const newId = res.data.player.id;
         setPlayerId(newId);
         localStorage.setItem('me_player_id', newId);
