@@ -1,6 +1,28 @@
-# React + TypeScript + Vite
+# Mystic Explorers - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Client web interface built with React 19, TypeScript, TailwindCSS, and Vite.
+
+## Quickstart & Execution
+
+1. **Install Dependencies** (if not already done):
+   ```bash
+   npm install
+   ```
+
+2. **Environment Configuration**:
+   The `.env` file points to the backend API:
+   ```env
+   VITE_API_URL=http://localhost:8001/api/v1
+   ```
+
+3. **Start Development Server**:
+   ```bash
+   npm run dev
+   ```
+   The application will be accessible at [http://localhost:5173/](http://localhost:5173/) (or the next available port like `5174`).
+
+---
+
 
 Currently, two official plugins are available:
 
