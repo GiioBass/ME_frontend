@@ -1,4 +1,3 @@
-// React is not needed directly in scope for React 17+ JSX
 import LoginScreen from './components/LoginScreen';
 import MainGameHUD from './layouts/MainGameHUD';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -22,13 +21,24 @@ function App() {
     handleRetrieve,
     handleConsume,
     handleFill,
-    handleDrink
+    handleDrink,
+    handleFetchInventory,
+    handleTalk,
+    handleDialogueChoice,
+    handleBuy,
+    handleSell,
+    handleQuestTurnIn,
+    handleSelectClass,
+    handleUseSkill,
+    handleCraft
   } = useGameEngine();
 
   if (isCheckingSession) {
     return (
       <div className="h-[100dvh] w-full bg-space-gradient flex items-center justify-center p-4">
-        <div className="text-stitch-cyan animate-pulse font-mono tracking-widest text-sm text-glow">Establishing secure link...</div>
+        <div className="text-stitch-cyan animate-pulse font-mono tracking-widest text-sm text-glow">
+          Establishing neural link to Mystic Explorers...
+        </div>
       </div>
     );
   }
@@ -53,6 +63,15 @@ function App() {
       onConsume={handleConsume}
       onFill={handleFill}
       onDrink={handleDrink}
+      onFetchInventory={handleFetchInventory}
+      onTalk={handleTalk}
+      onDialogueChoice={handleDialogueChoice}
+      onBuy={handleBuy}
+      onSell={handleSell}
+      onTurnInQuest={handleQuestTurnIn}
+      onSelectClass={handleSelectClass}
+      onUseSkill={handleUseSkill}
+      onCraft={handleCraft}
     />
   );
 }

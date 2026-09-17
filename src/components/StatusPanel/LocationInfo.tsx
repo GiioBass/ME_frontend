@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { Map, Radio, Activity } from 'lucide-react';
-import RadarPanel from './RadarPanel';
+import React from 'react';
+import { Map, Droplet, Flame, Hammer, FlaskConical, Wrench } from 'lucide-react';
 
 interface LocationInfoProps {
     name?: string;
@@ -10,92 +9,100 @@ interface LocationInfoProps {
         z: number;
     };
     description: string;
-    scoutedLocations?: { name: string; distance: number; direction: string }[];
-    onScout?: () => void;
     isDark?: boolean;
     availableActions?: string[];
     onDrink?: () => void;
+    onOpenCrafting?: () => void;
 }
 
-const LocationInfo: React.FC<LocationInfoProps> = ({ name, coordinates, description, scoutedLocations, onScout, isDark, availableActions = [], onDrink }) => {
-    const [isScanning, setIsScanning] = useState(false);
-    const [isRadarVisible, setIsRadarVisible] = useState(true);
+const LocationInfo: React.FC<LocationInfoProps> = ({
+    name,
+    coordinates,
+    description,
+    isDark,
+    availableActions = [],
+    onDrink,
+    onOpenCrafting
+}) => {
+    const hasWater = availableActions.includes("drink");
+    const hasCampfire = availableActions.some(a => a.toLowerCase().includes('campfire') || a.toLowerCase().includes('camp'));
+    const hasForge = availableActions.some(a => a.toLowerCase().includes('forge'));
+    const hasAlchemyLab = availableActions.some(a => a.toLowerCase().includes('alchemy'));
+    const hasCraftStation = hasCampfire || hasForge || hasAlchemyLab;
 
-    const handleScout = () => {
-        if (onScout) {
-            setIsScanning(true);
-            onScout();
-            setTimeout(() => setIsScanning(false), 1000);
-        }
-    };
     return (
         <div className="flex-shrink-0">
-            <h2 className="text-sm font-bold mb-4 flex flex-col gap-1 uppercase tracking-widest text-green-400/80 border-b border-green-900/50 pb-2">
-                <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2"><Map size={18} /> Sector Data</span>
-                    {coordinates && (
-                        <span className="text-xs bg-green-900/30 text-green-300 px-2 py-1 rounded border border-green-800/50 font-mono">
-                            {coordinates.x},{coordinates.y},{coordinates.z}
-                        </span>
-                    )}
+            {/* Sector Header */}
+            <div className="flex justify-between items-center mb-2 border-b border-stitch-cyan/30 pb-2">
+                <div className="flex items-center gap-2 text-stitch-cyan">
+                    <Map size={16} className="text-stitch-cyan drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-200">
+                        {name || "Unknown Sector"}
+                    </span>
                 </div>
-                {name && <span className="text-green-200 text-xs font-mono ml-6">{name}</span>}
-            </h2>
-            <div className={`relative transition-all duration-700 ${isDark ? 'grayscale-[0.8] opacity-60' : ''}`}>
-                <p className={`mb-6 leading-relaxed font-serif tracking-wide border-l-2 pl-4 italic py-3 rounded-r text-base transition-colors duration-700 ${isDark ? 'border-indigo-900 bg-indigo-950/20 text-indigo-300' : 'border-green-700/50 bg-green-900/5 text-green-100'}`}>
+                {coordinates && (
+                    <span className="text-[10px] bg-black/60 text-stitch-lightBlue px-2 py-0.5 rounded border border-stitch-cyan/40 font-mono font-bold">
+                        {coordinates.x},{coordinates.y},{coordinates.z}
+                    </span>
+                )}
+            </div>
+
+            {/* Environmental Narrative Box */}
+            <div className={`relative transition-all duration-500 rounded-xl p-3.5 ${isDark ? 'bg-indigo-950/20 border border-indigo-900/40 text-indigo-200' : 'bg-black/30 border border-white/5 text-slate-300'}`}>
+                <p className="leading-relaxed font-serif tracking-wide text-xs sm:text-sm italic">
                     "{description}"
                 </p>
                 {isDark && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/60 border border-indigo-500/30 text-[10px] uppercase tracking-tighter text-indigo-400 font-bold animate-pulse">
+                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/80 border border-indigo-500/40 text-[9px] uppercase tracking-wider text-indigo-300 font-bold animate-pulse">
                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.8)]"></div>
-                        Low Light Sector
+                        Low Light / Darkness Detected
                     </div>
                 )}
             </div>
 
-            {onScout && (
-                <button
-                    onClick={handleScout}
-                    disabled={isScanning}
-                    className="w-full mt-2 glass-panel-interactive py-2 rounded-xl flex items-center justify-center gap-2 text-stitch-cyan hover:text-white text-xs font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-cyan disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <Radio size={16} className={isScanning ? "animate-pulse text-white" : ""} />
-                    {isScanning ? "Scanning Sector..." : "Pulse Radar"}
-                </button>
-            )}
+            {/* Environment Features / Stations Badges */}
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {hasWater && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-950/60 text-blue-300 border border-blue-800/50 font-bold flex items-center gap-1">
+                        <Droplet size={10} className="text-blue-400" /> Water Source
+                    </span>
+                )}
+                {hasCampfire && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800/50 font-bold flex items-center gap-1">
+                        <Flame size={10} className="text-amber-400" /> Campfire Active
+                    </span>
+                )}
+                {hasForge && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-orange-950/60 text-orange-300 border border-orange-800/50 font-bold flex items-center gap-1">
+                        <Hammer size={10} className="text-orange-400" /> Blacksmith Forge
+                    </span>
+                )}
+                {hasAlchemyLab && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-950/60 text-purple-300 border border-purple-800/50 font-bold flex items-center gap-1">
+                        <FlaskConical size={10} className="text-purple-400" /> Alchemy Station
+                    </span>
+                )}
+            </div>
 
-            {onDrink && availableActions.includes("drink") && (
-                <button
-                    onClick={onDrink}
-                    className="w-full mt-2 glass-panel-interactive py-2 rounded-xl flex items-center justify-center gap-2 text-blue-400 hover:text-white text-xs font-bold tracking-widest uppercase border-blue-500/30 hover:border-blue-400 transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]"
-                >
-                    <Activity size={16} />
-                    Drink from Source
-                </button>
-            )}
-
-            {scoutedLocations && scoutedLocations.length > 0 && (
-                <div className="mt-4 border-t border-green-900/30 pt-4">
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5">
+                {hasWater && onDrink && (
                     <button
-                        onClick={() => setIsRadarVisible(!isRadarVisible)}
-                        className="w-full flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-green-500/60 hover:text-green-400 mb-2 transition-colors px-1"
+                        onClick={onDrink}
+                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white text-xs font-bold tracking-widest uppercase border border-stitch-cyan/40 bg-stitch-cyan/10 hover:bg-stitch-cyan/20 transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)]"
                     >
-                        <span className="flex items-center gap-2">
-                            <Radio size={12} className={isScanning ? "animate-ping" : ""} />
-                            Radar Feed
-                        </span>
-                        <span className="font-mono text-[8px] opacity-40">
-                            {isRadarVisible ? "[ HIDE ]" : "[ SHOW ]"}
-                        </span>
+                        <Droplet size={14} /> Drink
                     </button>
-
-                    {isRadarVisible && (
-                        <div className="animate-in slide-in-from-top-2 duration-300">
-                            <RadarPanel locations={scoutedLocations} />
-                        </div>
-                    )}
-                </div>
-            )}
+                )}
+                {hasCraftStation && onOpenCrafting && (
+                    <button
+                        onClick={onOpenCrafting}
+                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-amber-400 hover:text-white text-xs font-bold tracking-widest uppercase border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                    >
+                        <Wrench size={14} /> Craft
+                    </button>
+                )}
+            </div>
         </div>
     );
 };

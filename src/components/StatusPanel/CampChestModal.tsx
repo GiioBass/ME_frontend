@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, X, ArrowLeftRight } from 'lucide-react';
+import { Package, X, ArrowLeftRight, Sword, Shield } from 'lucide-react';
 import { type GameItem } from '../../api';
 
 interface CampChestModalProps {
@@ -45,7 +45,23 @@ const CampChestModal: React.FC<CampChestModalProps> = ({ isOpen, onClose, invent
                                     <div key={idx} className="bg-green-900/10 border border-green-800/30 p-3 rounded flex items-center justify-between group">
                                         <div className="flex flex-col text-left">
                                             <span className="text-green-100 font-bold text-sm truncate">{item.name}</span>
-                                            <span className="text-[10px] text-green-600 uppercase">TYPE: {item.item_type || 'UNKNOWN'}</span>
+                                            <div className="flex flex-col items-start gap-1 mt-0.5">
+                                                <span className="text-[10px] text-green-600 uppercase">TYPE: {item.item_type || 'UNKNOWN'} | QTY: {item.qty || 1}</span>
+                                                {(item.damage || item.shield) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        {item.damage !== undefined && item.damage > 0 && (
+                                                            <span className="flex items-center gap-1 text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30 font-bold tracking-wider">
+                                                                <Sword size={10} /> {item.damage}
+                                                            </span>
+                                                        )}
+                                                        {item.shield !== undefined && item.shield > 0 && (
+                                                            <span className="flex items-center gap-1 text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold tracking-wider">
+                                                                <Shield size={10} /> {item.shield}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : null}
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => onStore(item.name)}
@@ -70,7 +86,23 @@ const CampChestModal: React.FC<CampChestModalProps> = ({ isOpen, onClose, invent
                                     <div key={idx} className="bg-green-900/10 border border-green-800/30 p-3 rounded flex items-center justify-between group">
                                         <div className="flex flex-col text-left">
                                             <span className="text-green-100 font-bold text-sm truncate">{item.name}</span>
-                                            <span className="text-[10px] text-green-600 uppercase">TYPE: {item.item_type || 'UNKNOWN'}</span>
+                                            <div className="flex flex-col items-start gap-1 mt-0.5">
+                                                <span className="text-[10px] text-green-600 uppercase">TYPE: {item.item_type || 'UNKNOWN'} | QTY: {item.qty || 1}</span>
+                                                {(item.damage || item.shield) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        {item.damage !== undefined && item.damage > 0 && (
+                                                            <span className="flex items-center gap-1 text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30 font-bold tracking-wider">
+                                                                <Sword size={10} /> {item.damage}
+                                                            </span>
+                                                        )}
+                                                        {item.shield !== undefined && item.shield > 0 && (
+                                                            <span className="flex items-center gap-1 text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold tracking-wider">
+                                                                <Shield size={10} /> {item.shield}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : null}
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => onRetrieve(item.name)}

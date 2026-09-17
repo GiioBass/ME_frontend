@@ -1,5 +1,6 @@
 import React from 'react';
-import { Package, X, Activity } from 'lucide-react';
+import { Package, X, Activity, Sword, Shield } from 'lucide-react';
+
 
 import { type GameItem } from '../../api';
 
@@ -48,12 +49,26 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ inventory, currentWeigh
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-bold text-green-300 text-sm sm:text-base truncate">{itemName}</span>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex flex-col items-start gap-1 mt-0.5">
                                                         <span className="text-[10px] text-green-600 uppercase tracking-widest truncate">Qty: {itemQty} {isEquippable && typeof item !== 'string' ? `| ${item.item_type}` : ''}</span>
-                                                        {typeof item !== 'string' && item.is_light_source && (
-                                                            <span className="text-[8px] bg-yellow-500/20 text-yellow-400 px-1 rounded border border-yellow-500/30 font-bold uppercase tracking-tighter shadow-[0_0_5px_rgba(234,179,8,0.4)]">
-                                                                Light Source
-                                                            </span>
+                                                        {(typeof item !== 'string' && (item.is_light_source || (item.damage !== undefined && item.damage > 0) || (item.shield !== undefined && item.shield > 0))) && (
+                                                            <div className="flex items-center gap-2">
+                                                                {item.is_light_source && (
+                                                                    <span className="text-[8px] bg-yellow-500/20 text-yellow-400 px-1 rounded border border-yellow-500/30 font-bold uppercase tracking-tighter shadow-[0_0_5px_rgba(234,179,8,0.4)]">
+                                                                        Light Source
+                                                                    </span>
+                                                                )}
+                                                                {item.damage !== undefined && item.damage > 0 && (
+                                                                    <span className="flex items-center gap-1 text-[10px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30 font-bold tracking-wider">
+                                                                        <Sword size={10} /> {item.damage}
+                                                                    </span>
+                                                                )}
+                                                                {item.shield !== undefined && item.shield > 0 && (
+                                                                    <span className="flex items-center gap-1 text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold tracking-wider">
+                                                                        <Shield size={10} /> {item.shield}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

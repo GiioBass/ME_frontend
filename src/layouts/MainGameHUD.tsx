@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { Package, Power, TerminalSquare, Activity, Map, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, AlertTriangle, Box, Droplets, ChevronsUp, ChevronsDown } from 'lucide-react';
+import {
+    TerminalSquare,
+    Activity,
+    Map,
+    Radio,
+    Power,
+    ArrowUp,
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    ShoppingBag,
+    Scroll,
+} from 'lucide-react';
 import GameTerminal from '../components/Terminal/GameTerminal';
 import BioMetrics from '../components/StatusPanel/BioMetrics';
 import LocationInfo from '../components/StatusPanel/LocationInfo';
@@ -8,7 +20,14 @@ import EntityList from '../components/StatusPanel/EntityList';
 import InventoryModal from '../components/StatusPanel/InventoryModal';
 import WaypointsModal from '../components/StatusPanel/WaypointsModal';
 import CampChestModal from '../components/StatusPanel/CampChestModal';
+import RadarModal from '../components/StatusPanel/RadarModal';
 import { CommandListModal } from '../components/Modals/CommandListModal';
+import { DialogueModal } from '../components/Modals/DialogueModal';
+import { ShopModal } from '../components/Modals/ShopModal';
+import { QuestJournalModal } from '../components/Modals/QuestJournalModal';
+import { CraftingModal } from '../components/Modals/CraftingModal';
+import { ClassSelectModal } from '../components/Modals/ClassSelectModal';
+import { SkillBar } from '../components/Combat/SkillBar';
 import type { CommandResponse } from '../api';
 
 interface MainGameHUDProps {
@@ -26,221 +45,275 @@ interface MainGameHUDProps {
     onConsume?: (itemName: string) => void;
     onFill?: (itemName: string) => void;
     onDrink?: () => void;
+    onFetchInventory?: () => Promise<void>;
+    onTalk?: (npcName: string) => Promise<CommandResponse | null>;
+    onDialogueChoice?: (choice: string) => Promise<CommandResponse | null>;
+    onBuy?: (itemName: string) => Promise<CommandResponse | null>;
+    onSell?: (itemName: string) => Promise<CommandResponse | null>;
+    onTurnInQuest?: (questId: string) => Promise<CommandResponse | null>;
+    onSelectClass?: (className: string) => Promise<CommandResponse | null>;
+    onUseSkill?: (skillName: string, targetName?: string) => Promise<CommandResponse | null>;
+    onCraft?: (recipeName: string) => Promise<CommandResponse | null>;
 }
 
-const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand, onLogout, onEquip, onUnequip, onDrop, onScout, onTravel, onStore, onRetrieve, onConsume, onFill, onDrink }) => {
+const MainGameHUD: React.FC<MainGameHUDProps> = ({
+    gameState,
+    history,
+    onCommand,
+    onLogout,
+    onEquip,
+    onUnequip,
+    onDrop,
+    onScout,
+    onTravel,
+    onStore,
+    onRetrieve,
+    onConsume,
+    onFill,
+    onDrink,
+    onFetchInventory,
+    onTalk,
+    onDialogueChoice,
+    onBuy,
+    onSell,
+    onTurnInQuest,
+    onSelectClass,
+    onUseSkill,
+    onCraft
+}) => {
+    // Modal states
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
     const [isWaypointsOpen, setIsWaypointsOpen] = useState(false);
     const [isCampChestOpen, setIsCampChestOpen] = useState(false);
+    const [isRadarOpen, setIsRadarOpen] = useState(false);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isShopOpen, setIsShopOpen] = useState(false);
+    const [isQuestsOpen, setIsQuestsOpen] = useState(false);
+    const [isCraftingOpen, setIsCraftingOpen] = useState(false);
+    const [isClassSelectOpen, setIsClassSelectOpen] = useState(false);
     const [isTraveling, setIsTraveling] = useState(false);
     const [activeTab, setActiveTab] = useState<'terminal' | 'stats' | 'nav'>('terminal');
 
-    const isAtCamp = gameState?.location?.id && Object.values(gameState?.player?.waypoints || {}).includes(gameState.location.id);
     const hasEnemies = (gameState?.location?.enemies?.length || 0) > 0;
     const hasItems = (gameState?.location?.items?.length || 0) > 0;
     const isPlayerLowHealth = gameState?.player ? (gameState.player.stats.hp / gameState.player.stats.max_hp) < 0.3 : false;
-    const hasWater = gameState?.available_actions?.includes('drink') || gameState?.available_actions?.includes('fill') || false;
-    const canAscend = !!gameState?.location?.exits?.['up'];
-    const canDescend = !!gameState?.location?.exits?.['down'];
+    const activeDialogue = gameState?.player?.active_dialogue;
+    const activeQuestsCount = Object.keys(gameState?.player?.active_quests || {}).length;
 
     const handleTravel = (waypointName: string) => {
         if (!onTravel) return;
         setIsTraveling(true);
-        // Simulate travel delay
         setTimeout(() => {
             onTravel(waypointName);
             setIsTraveling(false);
             setIsWaypointsOpen(false);
         }, 1200);
-    }
+    };
+
+    const handleTalkToNpc = (npcName: string) => {
+        if (onTalk) {
+            onTalk(npcName);
+        }
+    };
 
     return (
-        <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-hidden flex flex-col p-4 md:p-8 relative pb-[80px] md:pb-8">
+        <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-hidden flex flex-col p-3 md:p-6 relative pb-[70px] md:pb-6">
 
-            {/* Decorative Background Elements */}
+            {/* Ambient Background Glows */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-stitch-blue/20 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-stitch-cyan/10 rounded-full blur-[120px] pointer-events-none"></div>
 
             {/* Main Container */}
-            <div className="w-full max-w-7xl flex-1 flex flex-col md:flex-row gap-4 md:gap-6 relative z-20 mx-auto min-h-0">
+            <div className="w-full max-w-7xl flex-1 flex flex-col md:flex-row gap-3 md:gap-5 relative z-20 mx-auto min-h-0">
 
-                {/* Mobile Title (Only visible on small screens) */}
+                {/* Mobile Top Header */}
                 <div className="md:hidden glass-panel p-3 flex-shrink-0 rounded-2xl flex items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                    <h1 className="text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase">
-                        <span className="text-white"> Mystic Explorers</span>
+                    <h1 className="text-base font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase">
+                        <span className="text-white">Mystic Explorers</span>
                     </h1>
-                    <button onClick={onLogout} className="text-stitch-cyan/50 hover:text-stitch-orange p-2">
-                        <Power size={18} />
-                    </button>
-                </div>
-
-                {/* Main Terminal Output (Hidden on mobile if not active tab) */}
-                <div className={`w-full flex-1 flex flex-col gap-4 min-h-0 ${activeTab === 'terminal' ? 'flex' : 'hidden md:flex'}`}>
-                    <GameTerminal history={history} onCommand={onCommand} onShowHelp={() => setIsHelpOpen(true)} />
-
-                    {/* Quick Actions & Alerts (Mobile Only) */}
-                    <div className="md:hidden flex flex-col gap-3 flex-shrink-0 mb-2">
-                        {/* Directional Pad */}
-                        <div className="bg-black/20 p-4 rounded-xl border border-stitch-blue/20 shadow-[0_0_20px_rgba(6,182,212,0.05)]">
-                            <h3 className="text-center text-[10px] tracking-[0.3em] text-stitch-cyan/50 uppercase mb-4">Nav-Comm Panel</h3>
-                            <div className="grid grid-cols-4 gap-2">
-                                <button
-                                    className={`p-3 relative z-10 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['west']
-                                        ? 'bg-gradient-to-l from-stitch-blue/20 to-stitch-cyan/40 hover:from-stitch-cyan/40 hover:to-stitch-cyan/60 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                                        : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
-                                    onClick={() => onCommand('west')}
-                                    disabled={!gameState?.location?.exits?.['west']}
-                                ><ArrowLeft size={24} /></button>
-                                <button
-                                    className={`p-3 relative z-10 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['north']
-                                        ? 'bg-gradient-to-t from-stitch-blue/20 to-stitch-cyan/40 hover:from-stitch-cyan/40 hover:to-stitch-cyan/60 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                                        : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
-                                    onClick={() => onCommand('north')}
-                                    disabled={!gameState?.location?.exits?.['north']}
-                                ><ArrowUp size={24} /></button>
-                                <button
-                                    className={`p-3 relative z-10 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['south']
-                                        ? 'bg-gradient-to-b from-stitch-blue/20 to-stitch-cyan/40 hover:from-stitch-cyan/40 hover:to-stitch-cyan/60 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                                        : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
-                                    onClick={() => onCommand('south')}
-                                    disabled={!gameState?.location?.exits?.['south']}
-                                ><ArrowDown size={24} /></button>
-                                <button
-                                    className={`p-3 relative z-10 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['east']
-                                        ? 'bg-gradient-to-r from-stitch-blue/20 to-stitch-cyan/40 hover:from-stitch-cyan/40 hover:to-stitch-cyan/60 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                                        : 'bg-gray-900/50 text-gray-700 border border-gray-800'}`}
-                                    onClick={() => onCommand('east')}
-                                    disabled={!gameState?.location?.exits?.['east']}
-                                ><ArrowRight size={24} /></button>
-                            </div>
-                        </div>
-
-                        {(canAscend || canDescend) && (
-                            <div className="grid grid-cols-2 gap-2">
-                                {canAscend && <button onClick={() => onCommand('up')} className="glass-panel-interactive p-2 rounded flex justify-center items-center gap-2 text-stitch-cyan hover:text-white text-xs font-bold uppercase col-span-1"><ChevronsUp size={16} /> Ascend</button>}
-                                {canDescend && <button onClick={() => onCommand('down')} className="glass-panel-interactive p-2 rounded flex justify-center items-center gap-2 text-stitch-cyan hover:text-white text-xs font-bold uppercase col-span-1"><ChevronsDown size={16} /> Descend</button>}
-                            </div>
-                        )}
-
-                        {/* Contextual Alerts */}
-                        {hasEnemies && (
-                            <button onClick={() => setActiveTab('nav')} className="glass-panel-interactive p-3 rounded-lg flex items-center justify-center gap-2 text-red-400 border-red-500/30 hover:bg-red-900/20 hover:text-red-300 w-full animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-                                <AlertTriangle size={20} /> Hostiles present in area
-                            </button>
-                        )}
-                        {hasItems && !hasEnemies && (
-                            <button onClick={() => setActiveTab('nav')} className="glass-panel-interactive p-3 rounded-lg flex items-center justify-center gap-2 text-stitch-cyan border-stitch-blue/30 hover:bg-stitch-blue/20 hover:text-white w-full">
-                                <Box size={20} /> Items detected nearby
-                            </button>
-                        )}
-                        {hasWater && !hasEnemies && (
-                            <button onClick={() => setActiveTab('nav')} className="glass-panel-interactive p-3 rounded-lg flex items-center justify-center gap-2 text-blue-400 border-blue-500/30 hover:bg-blue-900/20 hover:text-blue-300 w-full">
-                                <Droplets size={20} /> Water source nearby
-                            </button>
-                        )}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setIsQuestsOpen(true)}
+                            className="text-stitch-magenta p-1.5 rounded-lg hover:bg-white/5 relative"
+                            title="Quests"
+                        >
+                            <Scroll size={18} />
+                            {activeQuestsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-stitch-magenta text-black font-bold text-[9px] rounded-full flex items-center justify-center">
+                                    {activeQuestsCount}
+                                </span>
+                            )}
+                        </button>
+                        <button onClick={onLogout} className="text-stitch-cyan/50 hover:text-stitch-orange p-1.5">
+                            <Power size={18} />
+                        </button>
                     </div>
                 </div>
 
-                {/* Side Panel (HUD) - Hidden on mobile if terminal is active tab */}
-                <div className={`w-full md:w-[450px] flex-col gap-6 flex-1 min-h-0 overflow-hidden ${activeTab === 'terminal' ? 'hidden md:flex' : 'flex'}`}>
+                {/* Center Column: Terminal & Hotbar (Hidden on mobile if not active tab) */}
+                <div className={`w-full flex-1 flex flex-col gap-3 min-h-0 ${activeTab === 'terminal' ? 'flex' : 'hidden md:flex'}`}>
+                    
+                    {/* Game Terminal Output & Prompt */}
+                    <GameTerminal
+                        history={history}
+                        onCommand={onCommand}
+                        onShowHelp={() => setIsHelpOpen(true)}
+                    />
 
-                    {/* Desktop Title Hub (Hidden on mobile) */}
-                    <div className="hidden md:flex glass-panel p-4 rounded-2xl items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                        <h1 className="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
-                            <span className="text-white"> Mystic Explorers</span>
-                        </h1>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onLogout}
-                                className="text-stitch-cyan/50 hover:text-stitch-orange transition-colors p-2"
-                                title="Disconnect from Link"
-                            >
-                                <Power size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Stats & Actions */}
-                    {gameState?.player ? (
-                        <div className={`flex flex-col gap-4 ${activeTab === 'stats' ? 'flex' : 'hidden md:flex'}`}>
-                            <BioMetrics
-                                name={gameState.player.name}
-                                stats={gameState.player.stats}
-                                time={gameState.time}
-                                weapon={gameState.player.equipment?.weapon}
-                                armor={gameState.player.equipment?.armor}
-                                onUnequip={onUnequip}
-                            />
-                            <div className="flex flex-col gap-2">
-                                <button
-                                    onClick={() => setIsInventoryOpen(true)}
-                                    className="w-full glass-panel-interactive py-3 rounded-xl flex items-center justify-center gap-3 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.1)]"
-                                    title="Open Storage Unit"
-                                >
-                                    <Package size={20} />
-                                    Access Inventory
-                                </button>
-
-                                {isAtCamp && (
-                                    <button
-                                        onClick={() => setIsCampChestOpen(true)}
-                                        className="w-full glass-panel-interactive py-2 rounded-xl flex items-center justify-center gap-2 text-green-400 hover:text-white font-bold tracking-widest uppercase border-green-500/30 hover:border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)] transition-colors text-sm"
-                                        title="Open Camp Chest"
-                                    >
-                                        <Package size={16} />
-                                        Camp Chest
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className={`glass-panel rounded-2xl p-6 flex-shrink-0 flex items-center justify-center h-24 text-stitch-orange/70 animate-pulse text-sm uppercase tracking-widest border-stitch-orange/30 ${activeTab === 'stats' ? 'flex' : 'hidden md:flex'}`}>
-                            No Connection
-                        </div>
+                    {/* Combat Skill Hotbar */}
+                    {gameState?.player && (
+                        <SkillBar
+                            characterClass={gameState.player.stats.character_class || 'adventurer'}
+                            playerMp={gameState.player.stats.mp}
+                            maxMp={gameState.player.stats.max_mp}
+                            enemies={gameState.location?.enemies || []}
+                            onUseSkill={(skillName, targetName) => {
+                                if (onUseSkill) onUseSkill(skillName, targetName);
+                            }}
+                            onOpenClassSelect={() => setIsClassSelectOpen(true)}
+                        />
                     )}
 
-                    {/* Location Info & Actions */}
-                    <div className={`glass-panel rounded-2xl p-6 flex-1 flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-stitch-blue/50 scrollbar-track-transparent ${activeTab === 'nav' ? 'flex' : 'hidden md:flex'}`}>
+                    {/* Mobile Quick Action Directional Pad */}
+                    <div className="md:hidden flex flex-col gap-2 flex-shrink-0 mb-1">
+                        <div className="bg-black/40 p-2 rounded-xl border border-stitch-blue/20 shadow-[0_0_20px_rgba(6,182,212,0.05)]">
+                            <div className="grid grid-cols-4 gap-2">
+                                <button
+                                    className={`p-2.5 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['west'] ? 'bg-gradient-to-l from-stitch-blue/20 to-stitch-cyan/40 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'opacity-30 cursor-not-allowed bg-black/40 text-gray-500 border border-gray-800'}`}
+                                    onClick={() => onCommand('west')}
+                                    disabled={!gameState?.location?.exits?.['west']}
+                                ><ArrowLeft size={20} /></button>
+                                <button
+                                    className={`p-2.5 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['north'] ? 'bg-gradient-to-t from-stitch-blue/20 to-stitch-cyan/40 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'opacity-30 cursor-not-allowed bg-black/40 text-gray-500 border border-gray-800'}`}
+                                    onClick={() => onCommand('north')}
+                                    disabled={!gameState?.location?.exits?.['north']}
+                                ><ArrowUp size={20} /></button>
+                                <button
+                                    className={`p-2.5 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['south'] ? 'bg-gradient-to-b from-stitch-blue/20 to-stitch-cyan/40 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'opacity-30 cursor-not-allowed bg-black/40 text-gray-500 border border-gray-800'}`}
+                                    onClick={() => onCommand('south')}
+                                    disabled={!gameState?.location?.exits?.['south']}
+                                ><ArrowDown size={20} /></button>
+                                <button
+                                    className={`p-2.5 flex items-center justify-center rounded-lg transition-all active:scale-95 ${gameState?.location?.exits?.['east'] ? 'bg-gradient-to-r from-stitch-blue/20 to-stitch-cyan/40 text-white border border-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'opacity-30 cursor-not-allowed bg-black/40 text-gray-500 border border-gray-800'}`}
+                                    onClick={() => onCommand('east')}
+                                    disabled={!gameState?.location?.exits?.['east']}
+                                ><ArrowRight size={20} /></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Status Panels, Location & Navigation */}
+                <div className="w-full md:w-80 lg:w-96 flex flex-col gap-3 min-h-0 flex-shrink-0">
+                    
+                    {/* BioMetrics & Action Hub (Desktop + Stats Tab) */}
+                    <div className={`flex-col gap-3 ${activeTab === 'stats' ? 'flex' : 'hidden md:flex'}`}>
+                        {gameState?.player ? (
+                            <>
+                                <BioMetrics
+                                    name={gameState.player.name}
+                                    stats={gameState.player.stats}
+                                    time={gameState.time}
+                                    weapon={gameState.player.equipment?.weapon}
+                                    armor={gameState.player.equipment?.armor}
+                                    onUnequip={onUnequip}
+                                    onOpenClassSelect={() => setIsClassSelectOpen(true)}
+                                />
+
+                                {/* Quick System Actions Matrix */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            if (onFetchInventory) await onFetchInventory();
+                                            setIsInventoryOpen(true);
+                                        }}
+                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-stitch-cyan hover:text-white border-stitch-cyan/30 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all"
+                                    >
+                                        <Activity size={16} /> Inventory
+                                    </button>
+
+                                    <button
+                                        onClick={() => setIsQuestsOpen(true)}
+                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-stitch-magenta hover:text-white border-stitch-magenta/30 hover:border-stitch-magenta shadow-[0_0_10px_rgba(217,70,239,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all relative"
+                                    >
+                                        <Scroll size={16} /> Quests
+                                        {activeQuestsCount > 0 && (
+                                            <span className="absolute 1 top-1 right-2 w-3.5 h-3.5 bg-stitch-magenta text-black text-[8px] font-bold rounded-full flex items-center justify-center">
+                                                {activeQuestsCount}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setIsShopOpen(true)}
+                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-amber-400 hover:text-white border-amber-500/30 hover:border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all"
+                                    >
+                                        <ShoppingBag size={16} /> Market
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="glass-panel rounded-2xl p-6 text-center text-slate-500 italic text-xs font-mono">
+                                No Link Established
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Location Info, Detected Entities & Exits */}
+                    <div className={`glass-panel rounded-2xl p-4 sm:p-5 flex-1 flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-stitch-blue/50 scrollbar-track-transparent ${activeTab === 'nav' ? 'flex' : 'hidden md:flex'}`}>
                         {gameState?.location ? (
                             <>
                                 <LocationInfo
                                     name={gameState.location.name}
                                     coordinates={gameState.location.coordinates}
                                     description={gameState.location.description}
-                                    scoutedLocations={gameState.scouted_locations}
-                                    onScout={onScout}
                                     isDark={gameState.location.is_dark}
                                     availableActions={gameState.available_actions || []}
                                     onDrink={onDrink}
+                                    onOpenCrafting={() => setIsCraftingOpen(true)}
                                 />
 
-                                <div className="mt-4 overflow-y-auto pr-1">
+                                <div className="mt-2 overflow-y-auto pr-1">
                                     <EntityList
                                         items={gameState.location.items}
                                         enemies={gameState.location.enemies}
+                                        availableActions={gameState.available_actions || []}
                                         onTake={(item) => onCommand(`take ${item}`)}
                                         onAttack={(enemy) => onCommand(`attack ${enemy}`)}
+                                        onTalk={handleTalkToNpc}
+                                        onOpenShop={() => setIsShopOpen(true)}
+                                        onOpenCrafting={() => setIsCraftingOpen(true)}
                                     />
                                 </div>
 
-                                <div className="flex-1"></div>
+                                <div className="flex-1 min-h-[10px]"></div>
 
                                 <NavigationGrid
                                     exits={gameState.location.exits}
                                     onMove={onCommand}
                                 />
 
-                                <button
-                                    onClick={() => setIsWaypointsOpen(true)}
-                                    className="w-full mt-4 glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-2 text-stitch-blue hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-lightBlue shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-colors"
-                                >
-                                    Fast Travel Network
-                                </button>
+                                <div className="grid grid-cols-2 gap-2 mt-3">
+                                    <button
+                                        onClick={() => setIsWaypointsOpen(true)}
+                                        className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-blue hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-lightBlue shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-colors text-[11px]"
+                                    >
+                                        <Map size={14} /> Waypoints
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (onScout) onScout();
+                                            setIsRadarOpen(true);
+                                        }}
+                                        className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-cyan/30 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.2)] transition-colors text-[11px]"
+                                    >
+                                        <Radio size={14} /> Radar
+                                    </button>
+                                </div>
                             </>
                         ) : (
-                            <div className="flex-1 flex items-center justify-center text-stitch-cyan/50 italic font-mono text-sm">
-                                Scanning coordinates...
+                            <div className="flex-1 flex items-center justify-center text-stitch-cyan/50 italic font-mono text-xs">
+                                Scanning sector telemetry...
                             </div>
                         )}
                     </div>
@@ -253,51 +326,49 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                     onClick={() => setActiveTab('terminal')}
                     className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'terminal' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
                 >
-                    <TerminalSquare size={24} />
-                    <span className="text-[10px] mt-1 tracking-wider uppercase font-bold">Terminal</span>
+                    <TerminalSquare size={20} />
+                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Terminal</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('stats')}
                     className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'stats' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                     <div className="relative">
-                        <Activity size={24} />
-                        {isPlayerLowHealth && <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>}
-                        {isPlayerLowHealth && <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-black"></div>}
+                        <Activity size={20} />
+                        {isPlayerLowHealth && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></div>}
                     </div>
-                    <span className="text-[10px] mt-1 tracking-wider uppercase font-bold">Stats</span>
+                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Stats</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('nav')}
                     className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'nav' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                     <div className="relative">
-                        <Map size={24} />
-                        {hasEnemies && <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-black"></div>}
-                        {hasItems && !hasEnemies && <div className="absolute -top-1 -right-1 w-3 h-3 bg-stitch-cyan rounded-full border border-black"></div>}
+                        <Map size={20} />
+                        {hasEnemies && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-black"></div>}
+                        {hasItems && !hasEnemies && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-stitch-cyan rounded-full border border-black"></div>}
                     </div>
-                    <span className="text-[10px] mt-1 tracking-wider uppercase font-bold">Map</span>
+                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Map</span>
                 </button>
             </div>
 
-            {/* Inventory Modal */}
+            {/* Modals Suite */}
+            
+            {/* 1. Inventory Modal */}
             <InventoryModal
                 inventory={gameState?.player?.inventory || []}
                 currentWeight={gameState?.player?.current_weight || 0}
                 maxWeight={gameState?.player?.stats?.max_weight || 0}
                 isOpen={isInventoryOpen}
                 onClose={() => setIsInventoryOpen(false)}
-                onEquip={(item) => {
-                    onEquip(item);
-                }}
-                onDrop={(item) => {
-                    onDrop(item);
-                }}
+                onEquip={(item) => onEquip(item)}
+                onDrop={(item) => onDrop(item)}
                 onConsume={onConsume ? ((item) => onConsume(item)) : undefined}
                 onFill={onFill ? ((item) => onFill(item)) : undefined}
                 availableActions={gameState?.available_actions || []}
             />
 
+            {/* 2. Fast Travel / Waypoints Modal */}
             <WaypointsModal
                 waypoints={gameState?.player?.waypoints || {}}
                 isOpen={isWaypointsOpen}
@@ -307,6 +378,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                 onCreateCamp={(campName) => onCommand(`camp ${campName}`)}
             />
 
+            {/* 3. Camp Storage Chest */}
             <CampChestModal
                 isOpen={isCampChestOpen}
                 onClose={() => setIsCampChestOpen(false)}
@@ -318,9 +390,74 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({ gameState, history, onCommand
                 onRetrieve={onRetrieve || (() => { })}
             />
 
+            {/* 4. Interactive Dialogue Modal */}
+            <DialogueModal
+                dialogue={activeDialogue || null}
+                isOpen={!!activeDialogue}
+                onClose={() => onCommand('look')}
+                onChoice={(choice) => {
+                    if (onDialogueChoice) onDialogueChoice(choice);
+                }}
+                availableActions={gameState?.available_actions || []}
+            />
+
+            {/* 5. Merchant Trading Post Modal */}
+            <ShopModal
+                isOpen={isShopOpen}
+                onClose={() => setIsShopOpen(false)}
+                playerGold={gameState?.player?.stats?.gold || 0}
+                playerInventory={gameState?.player?.inventory || []}
+                onBuy={(itemName) => {
+                    if (onBuy) onBuy(itemName);
+                }}
+                onSell={(itemName) => {
+                    if (onSell) onSell(itemName);
+                }}
+            />
+
+            {/* 6. Quest Journal Modal */}
+            <QuestJournalModal
+                isOpen={isQuestsOpen}
+                onClose={() => setIsQuestsOpen(false)}
+                activeQuests={gameState?.player?.active_quests || {}}
+                completedQuests={gameState?.player?.completed_quests || []}
+                onTurnIn={(questId) => {
+                    if (onTurnInQuest) onTurnInQuest(questId);
+                }}
+            />
+
+            {/* 7. Field Crafting Workshop Modal */}
+            <CraftingModal
+                isOpen={isCraftingOpen}
+                onClose={() => setIsCraftingOpen(false)}
+                playerInventory={gameState?.player?.inventory || []}
+                availableActions={gameState?.available_actions || []}
+                onCraft={(recipeName) => {
+                    if (onCraft) onCraft(recipeName);
+                }}
+            />
+
+            {/* 8. Archetype Specialization Modal */}
+            <ClassSelectModal
+                isOpen={isClassSelectOpen}
+                onClose={() => setIsClassSelectOpen(false)}
+                currentClass={gameState?.player?.stats?.character_class || 'adventurer'}
+                onSelectClass={(className) => {
+                    if (onSelectClass) onSelectClass(className);
+                }}
+            />
+
+            {/* 9. Help & Command Glossary */}
             <CommandListModal
                 isOpen={isHelpOpen}
                 onClose={() => setIsHelpOpen(false)}
+            />
+
+            {/* 10. Long-range Radar Modal */}
+            <RadarModal
+                isOpen={isRadarOpen}
+                onClose={() => setIsRadarOpen(false)}
+                scoutedLocations={gameState?.scouted_locations}
             />
         </div>
     );
