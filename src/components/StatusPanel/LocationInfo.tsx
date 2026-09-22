@@ -11,6 +11,7 @@ interface LocationInfoProps {
     description: string;
     isDark?: boolean;
     availableActions?: string[];
+    interactables?: string[];
     onDrink?: () => void;
     onOpenCrafting?: () => void;
 }
@@ -21,14 +22,24 @@ const LocationInfo: React.FC<LocationInfoProps> = ({
     description,
     isDark,
     availableActions = [],
+    interactables = [],
     onDrink,
     onOpenCrafting
 }) => {
-    const hasWater = availableActions.includes("drink");
-    const hasCampfire = availableActions.some(a => a.toLowerCase().includes('campfire') || a.toLowerCase().includes('camp'));
-    const hasForge = availableActions.some(a => a.toLowerCase().includes('forge'));
-    const hasAlchemyLab = availableActions.some(a => a.toLowerCase().includes('alchemy'));
-    const hasCraftStation = hasCampfire || hasForge || hasAlchemyLab;
+    const hasWater = availableActions.includes("drink") || interactables.some(i => str(i).startsWith("water_source:"));
+    
+    // Check specific stations accurately
+    const locInters = (interactables || []).map(i => String(i).toLowerCase());
+    const hasCampfire = locInters.some(i => i.includes('campfire')) || availableActions.some(a => a.toLowerCase() === 'campfire' || a.toLowerCase().startsWith('station:campfire'));
+    const hasForge = locInters.some(i => i.includes('forge') || i.includes('anvil')) || availableActions.some(a => a.toLowerCase() === 'forge' || a.toLowerCase() === 'anvil' || a.toLowerCase().startsWith('station:forge') || a.toLowerCase().startsWith('station:anvil'));
+    const hasAlchemyLab = locInters.some(i => i.includes('alchemy')) || availableActions.some(a => a.toLowerCase().includes('alchemy') || a.toLowerCase().startsWith('station:alchemy'));
+    const hasWorkbench = locInters.some(i => i.includes('workbench') || i.includes('workshop')) || availableActions.some(a => a.toLowerCase().includes('workbench') || a.toLowerCase().startsWith('station:workbench'));
+    
+    const hasCraftStation = hasCampfire || hasForge || hasAlchemyLab || hasWorkbench || availableActions.includes('workshop');
+
+    function str(val: any): string {
+        return String(val || '');
+    }
 
     return (
         <div className="flex-shrink-0">
@@ -82,6 +93,11 @@ const LocationInfo: React.FC<LocationInfoProps> = ({
                         <FlaskConical size={10} className="text-purple-400" /> Alchemy Station
                     </span>
                 )}
+                {hasWorkbench && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800/50 font-bold flex items-center gap-1">
+                        <Wrench size={10} className="text-amber-400" /> Workbench
+                    </span>
+                )}
             </div>
 
             {/* Quick Action Buttons */}
@@ -89,7 +105,7 @@ const LocationInfo: React.FC<LocationInfoProps> = ({
                 {hasWater && onDrink && (
                     <button
                         onClick={onDrink}
-                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white text-xs font-bold tracking-widest uppercase border border-stitch-cyan/40 bg-stitch-cyan/10 hover:bg-stitch-cyan/20 transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white text-xs font-bold tracking-widest uppercase border border-stitch-cyan/40 bg-stitch-cyan/10 hover:bg-stitch-cyan/20 transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)] cursor-pointer"
                     >
                         <Droplet size={14} /> Drink
                     </button>
@@ -97,7 +113,7 @@ const LocationInfo: React.FC<LocationInfoProps> = ({
                 {hasCraftStation && onOpenCrafting && (
                     <button
                         onClick={onOpenCrafting}
-                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-amber-400 hover:text-white text-xs font-bold tracking-widest uppercase border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                        className="py-2 rounded-xl flex items-center justify-center gap-1.5 text-amber-400 hover:text-white text-xs font-bold tracking-widest uppercase border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)] cursor-pointer"
                     >
                         <Wrench size={14} /> Craft
                     </button>

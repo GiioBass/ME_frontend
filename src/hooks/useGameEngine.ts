@@ -15,6 +15,7 @@ import {
     actionFill,
     actionTalk,
     actionDialogue,
+    actionEndDialogue,
     actionBuy,
     actionSell,
     actionQuests,
@@ -218,6 +219,10 @@ export const useGameEngine = () => {
         return executeAction(`dialogue ${choice}`, () => actionDialogue(playerId, choice), true);
     }, [playerId, executeAction]);
 
+    const handleEndDialogue = useCallback(() => {
+        return executeAction(`end dialogue`, () => actionEndDialogue(playerId), true);
+    }, [playerId, executeAction]);
+
     // Trade & Shop
     const handleBuy = useCallback((itemName: string) => {
         return executeAction(`buy ${itemName}`, () => actionBuy(playerId, itemName), true);
@@ -281,6 +286,7 @@ export const useGameEngine = () => {
         handleFetchInventory,
         handleTalk,
         handleDialogueChoice,
+        handleEndDialogue,
         handleBuy,
         handleSell,
         handleQuests,

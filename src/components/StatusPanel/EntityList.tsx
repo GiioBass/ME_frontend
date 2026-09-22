@@ -5,6 +5,7 @@ import { type GameItem, type GameEnemy } from '../../api';
 interface EntityListProps {
     items: GameItem[];
     enemies: GameEnemy[];
+    interactables?: string[];
     availableActions?: string[];
     onTake: (itemName: string) => void;
     onAttack: (enemyName: string) => void;
@@ -20,6 +21,7 @@ interface GroupedItem extends GameItem {
 const EntityList: React.FC<EntityListProps> = ({
     items,
     enemies,
+    interactables = [],
     availableActions = [],
     onTake,
     onAttack,
@@ -56,7 +58,9 @@ const EntityList: React.FC<EntityListProps> = ({
     }, [availableActions]);
 
     const hasShop = availableActions.some(act => act === 'shop' || act.startsWith('buy') || act.startsWith('sell'));
-    const hasCraft = availableActions.some(act => act.startsWith('craft ') || act === 'craft');
+    const locInters = (interactables || []).map(i => String(i).toLowerCase());
+    const hasWorkstationInteractable = locInters.some(i => ['forge', 'anvil', 'workbench', 'alchemy', 'campfire', 'workshop'].some(k => i.includes(k)));
+    const hasCraft = availableActions.includes('workshop') || hasWorkstationInteractable || availableActions.some(act => act.startsWith('craft '));
 
     return (
         <div className="mt-2 space-y-4 flex-shrink-0">
@@ -82,10 +86,10 @@ const EntityList: React.FC<EntityListProps> = ({
                                             <MessageSquare size={12} /> Talk
                                         </button>
                                     )}
-                                    {hasShop && npcName.toLowerCase().includes('merchant') && onOpenShop && (
+                                    {hasShop && (npcName.toLowerCase().includes('merchant') || npcName.toLowerCase().includes('silas')) && onOpenShop && (
                                         <button
                                             onClick={() => onOpenShop(npcName)}
-                                            className="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 hover:text-white px-2.5 py-1 rounded border border-amber-500/40 font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                                            className="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 hover:text-white px-2.5 py-1 rounded border border-amber-500/40 font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-[0_0_8px_rgba(245,158,11,0.2)] cursor-pointer active:scale-95"
                                         >
                                             <ShoppingBag size={12} /> Trade
                                         </button>

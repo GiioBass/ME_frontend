@@ -23,6 +23,38 @@ Client web interface built with React 19, TypeScript, TailwindCSS, and Vite.
 
 ---
 
+## Compilación Web & Android (APK / Capacitor)
+
+### 1. Compilar el Frontend Web
+Genera la carpeta de producción `dist/` optimizada:
+```bash
+npm run build
+```
+
+### 2. Sincronizar con el proyecto nativo de Android
+Sincroniza los assets web hacia la carpeta nativa `android/`:
+```bash
+npx cap sync android
+```
+
+### 3. Generar el APK
+- **Vía Android Studio**:
+  ```bash
+  npx cap open android
+  ```
+  O abre la carpeta `ME_frontend/android` en Android Studio y selecciona **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+- **Vía Línea de Comandos (con JDK y Android SDK configurados)**:
+  ```bash
+  cd android
+  ./gradlew assembleDebug
+  # El APK generado estará en: android/app/build/outputs/apk/debug/app-debug.apk
+  ```
+
+> [!TIP]
+> Para más detalles sobre la configuración de red y la IP para dispositivos físicos o emuladores, consulta [mobile_build_guide.md](file:///var/www/html/ME_frontend/docs/mobile_build_guide.md).
+
+---
+
 
 Currently, two official plugins are available:
 

@@ -9,7 +9,6 @@ import {
     ArrowDown,
     ArrowLeft,
     ArrowRight,
-    ShoppingBag,
     Scroll,
 } from 'lucide-react';
 import GameTerminal from '../components/Terminal/GameTerminal';
@@ -48,6 +47,7 @@ interface MainGameHUDProps {
     onFetchInventory?: () => Promise<void>;
     onTalk?: (npcName: string) => Promise<CommandResponse | null>;
     onDialogueChoice?: (choice: string) => Promise<CommandResponse | null>;
+    onEndDialogue?: () => Promise<CommandResponse | null>;
     onBuy?: (itemName: string) => Promise<CommandResponse | null>;
     onSell?: (itemName: string) => Promise<CommandResponse | null>;
     onTurnInQuest?: (questId: string) => Promise<CommandResponse | null>;
@@ -74,6 +74,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     onFetchInventory,
     onTalk,
     onDialogueChoice,
+    onEndDialogue,
     onBuy,
     onSell,
     onTurnInQuest,
@@ -92,6 +93,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     const [isCraftingOpen, setIsCraftingOpen] = useState(false);
     const [isClassSelectOpen, setIsClassSelectOpen] = useState(false);
     const [isTraveling, setIsTraveling] = useState(false);
+    const [isDialogueDismissed, setIsDialogueDismissed] = useState(false);
     const [activeTab, setActiveTab] = useState<'terminal' | 'stats' | 'nav'>('terminal');
 
     const hasEnemies = (gameState?.location?.enemies?.length || 0) > 0;
@@ -99,6 +101,20 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     const isPlayerLowHealth = gameState?.player ? (gameState.player.stats.hp / gameState.player.stats.max_hp) < 0.3 : false;
     const activeDialogue = gameState?.player?.active_dialogue;
     const activeQuestsCount = Object.keys(gameState?.player?.active_quests || {}).length;
+
+    // Reset dismissed state when new dialogue node/npc begins
+    React.useEffect(() => {
+        setIsDialogueDismissed(false);
+    }, [activeDialogue?.node_id, activeDialogue?.npc_id]);
+
+    const handleCloseDialogue = () => {
+        setIsDialogueDismissed(true);
+        if (onEndDialogue) {
+            onEndDialogue();
+        } else {
+            onCommand('leave');
+        }
+    };
 
     const handleTravel = (waypointName: string) => {
         if (!onTravel) return;
@@ -134,12 +150,12 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                     <div className="flex items-center gap-1">
                         <button
                             onClick={() => setIsQuestsOpen(true)}
-                            className="text-stitch-magenta p-1.5 rounded-lg hover:bg-white/5 relative"
+                            className="text-fuchsia-400 p-1.5 rounded-lg hover:bg-white/5 relative cursor-pointer"
                             title="Quests"
                         >
                             <Scroll size={18} />
                             {activeQuestsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-stitch-magenta text-black font-bold text-[9px] rounded-full flex items-center justify-center">
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-fuchsia-500 text-black font-bold text-[9px] rounded-full flex items-center justify-center animate-pulse">
                                     {activeQuestsCount}
                                 </span>
                             )}
@@ -150,7 +166,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                     </div>
                 </div>
 
-                {/* Center Column: Terminal & Hotbar (Hidden on mobile if not active tab) */}
+                {/* Center Column: Terminal (Hidden on mobile if not active tab) */}
                 <div className={`w-full flex-1 flex flex-col gap-3 min-h-0 ${activeTab === 'terminal' ? 'flex' : 'hidden md:flex'}`}>
                     
                     {/* Game Terminal Output & Prompt */}
@@ -159,20 +175,6 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                         onCommand={onCommand}
                         onShowHelp={() => setIsHelpOpen(true)}
                     />
-
-                    {/* Combat Skill Hotbar */}
-                    {gameState?.player && (
-                        <SkillBar
-                            characterClass={gameState.player.stats.character_class || 'adventurer'}
-                            playerMp={gameState.player.stats.mp}
-                            maxMp={gameState.player.stats.max_mp}
-                            enemies={gameState.location?.enemies || []}
-                            onUseSkill={(skillName, targetName) => {
-                                if (onUseSkill) onUseSkill(skillName, targetName);
-                            }}
-                            onOpenClassSelect={() => setIsClassSelectOpen(true)}
-                        />
-                    )}
 
                     {/* Mobile Quick Action Directional Pad */}
                     <div className="md:hidden flex flex-col gap-2 flex-shrink-0 mb-1">
@@ -221,10 +223,10 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                 />
 
                                 {/* Quick System Actions Matrix */}
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={async () => {
-                                            if (onFetchInventory) await onFetchInventory();
+                                             if (onFetchInventory) await onFetchInventory();
                                             setIsInventoryOpen(true);
                                         }}
                                         className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-stitch-cyan hover:text-white border-stitch-cyan/30 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all"
@@ -234,21 +236,14 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
 
                                     <button
                                         onClick={() => setIsQuestsOpen(true)}
-                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-stitch-magenta hover:text-white border-stitch-magenta/30 hover:border-stitch-magenta shadow-[0_0_10px_rgba(217,70,239,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all relative"
+                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-fuchsia-400 hover:text-white border-fuchsia-500/30 hover:border-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all relative cursor-pointer"
                                     >
                                         <Scroll size={16} /> Quests
                                         {activeQuestsCount > 0 && (
-                                            <span className="absolute 1 top-1 right-2 w-3.5 h-3.5 bg-stitch-magenta text-black text-[8px] font-bold rounded-full flex items-center justify-center">
+                                            <span className="absolute top-1 right-2 w-3.5 h-3.5 bg-fuchsia-500 text-black text-[8px] font-bold rounded-full flex items-center justify-center animate-pulse">
                                                 {activeQuestsCount}
                                             </span>
                                         )}
-                                    </button>
-
-                                    <button
-                                        onClick={() => setIsShopOpen(true)}
-                                        className="glass-panel-interactive py-2.5 px-2 rounded-xl flex flex-col items-center justify-center gap-1 text-amber-400 hover:text-white border-amber-500/30 hover:border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)] text-[10px] font-bold uppercase tracking-wider transition-all"
-                                    >
-                                        <ShoppingBag size={16} /> Market
                                     </button>
                                 </div>
                             </>
@@ -259,7 +254,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                         )}
                     </div>
 
-                    {/* Location Info, Detected Entities & Exits */}
+                    {/* Location Info, Detected Entities, Tactical Actions & Exits */}
                     <div className={`glass-panel rounded-2xl p-4 sm:p-5 flex-1 flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-stitch-blue/50 scrollbar-track-transparent ${activeTab === 'nav' ? 'flex' : 'hidden md:flex'}`}>
                         {gameState?.location ? (
                             <>
@@ -269,6 +264,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                     description={gameState.location.description}
                                     isDark={gameState.location.is_dark}
                                     availableActions={gameState.available_actions || []}
+                                    interactables={gameState.location.interactables || []}
                                     onDrink={onDrink}
                                     onOpenCrafting={() => setIsCraftingOpen(true)}
                                 />
@@ -277,6 +273,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                     <EntityList
                                         items={gameState.location.items}
                                         enemies={gameState.location.enemies}
+                                        interactables={gameState.location.interactables || []}
                                         availableActions={gameState.available_actions || []}
                                         onTake={(item) => onCommand(`take ${item}`)}
                                         onAttack={(enemy) => onCommand(`attack ${enemy}`)}
@@ -285,6 +282,23 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                         onOpenCrafting={() => setIsCraftingOpen(true)}
                                     />
                                 </div>
+
+                                {/* Tactical Abilities - ONLY shown during combat when hostiles are detected */}
+                                {gameState?.player && (gameState.location.enemies?.length || 0) > 0 && (
+                                    <div className="mt-3">
+                                        <SkillBar
+                                            characterClass={gameState.player.stats.character_class || 'adventurer'}
+                                            playerMp={gameState.player.stats.mp}
+                                            maxMp={gameState.player.stats.max_mp}
+                                            skillCooldowns={gameState.player.skill_cooldowns || {}}
+                                            enemies={gameState.location.enemies}
+                                            onUseSkill={(skillName, targetName) => {
+                                                if (onUseSkill) onUseSkill(skillName, targetName);
+                                            }}
+                                            onOpenClassSelect={() => setIsClassSelectOpen(true)}
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="flex-1 min-h-[10px]"></div>
 
@@ -393,8 +407,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
             {/* 4. Interactive Dialogue Modal */}
             <DialogueModal
                 dialogue={activeDialogue || null}
-                isOpen={!!activeDialogue}
-                onClose={() => onCommand('look')}
+                isOpen={!!activeDialogue && !isDialogueDismissed}
+                onClose={handleCloseDialogue}
                 onChoice={(choice) => {
                     if (onDialogueChoice) onDialogueChoice(choice);
                 }}

@@ -25,6 +25,7 @@ function App() {
     handleFetchInventory,
     handleTalk,
     handleDialogueChoice,
+    handleEndDialogue,
     handleBuy,
     handleSell,
     handleQuestTurnIn,
@@ -66,6 +67,7 @@ function App() {
       onFetchInventory={handleFetchInventory}
       onTalk={handleTalk}
       onDialogueChoice={handleDialogueChoice}
+      onEndDialogue={handleEndDialogue}
       onBuy={handleBuy}
       onSell={handleSell}
       onTurnInQuest={handleQuestTurnIn}

@@ -32,7 +32,8 @@ Configura la variable `VITE_API_URL` apuntando a la **IP de tu computadora en tu
 Ejemplo de cómo debe verse tu archivo `.env`:
 ```env
 # Reemplaza la IP por la IPv4 real de tu máquina (búscala con el comando ipconfig en Windows o ip a en Linux)
-VITE_API_URL=http://192.168.1.15:8000/api/v1
+# y el puerto donde corre tu backend (por defecto 8001):
+VITE_API_URL=http://192.168.1.15:8001/api/v1
 ```
 
 *(Nota: Asegúrate también de que tu servidor de Python backend esté escuchando en la IP `0.0.0.0` para poder recibir peticiones externas).*

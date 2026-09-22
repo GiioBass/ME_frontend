@@ -81,7 +81,7 @@ export const CraftingModal: React.FC<CraftingModalProps> = ({
     });
 
     // Detect available workstations from actions or nearby
-    const hasCampfire = availableActions.some(a => a.toLowerCase().includes('campfire') || a.toLowerCase().includes('camp')) || true;
+    const hasCampfire = availableActions.some(a => a.toLowerCase().includes('campfire') || a.toLowerCase().includes('camp'));
     const hasForge = availableActions.some(a => a.toLowerCase().includes('forge'));
     const hasAlchemyLab = availableActions.some(a => a.toLowerCase().includes('alchemy'));
 
@@ -91,7 +91,7 @@ export const CraftingModal: React.FC<CraftingModalProps> = ({
         if (req === 'campfire') return hasCampfire;
         if (req === 'forge') return hasForge;
         if (req === 'alchemy_lab' || req === 'alchemy') return hasAlchemyLab;
-        return true;
+        return availableActions.some(a => a.toLowerCase().includes(req));
     };
 
     const filteredRecipes = DEFAULT_RECIPES.filter(r => {

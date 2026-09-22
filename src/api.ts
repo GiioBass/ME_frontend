@@ -54,8 +54,17 @@ export interface PlayerStats {
     character_class: string;
 }
 
+export interface QuestReward {
+    xp?: number;
+    gold?: number;
+    items?: Array<{ name: string; qty?: number } | string>;
+}
+
 export interface QuestObjective {
-    type: 'kill' | 'gather' | 'talk' | 'explore' | string;
+    id?: string;
+    description?: string;
+    objective_type?: 'kill' | 'gather' | 'talk' | 'explore' | 'craft' | 'discover' | string;
+    type?: string;
     target: string;
     required_count: number;
     current_count: number;
@@ -65,12 +74,15 @@ export interface Quest {
     id: string;
     title: string;
     description: string;
+    is_main_quest?: boolean;
     giver_npc_id?: string;
+    turn_in_npc_id?: string;
     objectives: QuestObjective[];
-    reward_xp: number;
-    reward_gold: number;
-    reward_items?: string[];
-    status: 'active' | 'completed' | 'turned_in';
+    reward?: QuestReward;
+    reward_xp?: number;
+    reward_gold?: number;
+    reward_items?: any[];
+    status?: 'not_started' | 'active' | 'completed' | 'turned_in' | string;
 }
 
 export interface Skill {
@@ -118,6 +130,18 @@ export interface Recipe {
     result_qty: number;
 }
 
+export interface ScoutedLocation {
+    name: string;
+    distance: number;
+    direction: string;
+    dx?: number;
+    dy?: number;
+    x?: number;
+    y?: number;
+    z?: number;
+    type?: 'cave' | 'water' | 'town' | 'poi' | 'landmark' | string;
+}
+
 export interface CommandResponse {
     message: string;
     player: {
@@ -132,6 +156,7 @@ export interface CommandResponse {
         active_quests?: Record<string, Quest>;
         completed_quests?: string[];
         skills?: string[];
+        skill_cooldowns?: Record<string, number>;
         active_dialogue?: ActiveDialogue | null;
     };
     location: {
@@ -143,6 +168,7 @@ export interface CommandResponse {
         camp_storage: GameItem[];
         enemies: GameEnemy[];
         interactables?: string[];
+        npcs?: any[];
         coordinates?: {
             x: number;
             y: number;
@@ -157,11 +183,7 @@ export interface CommandResponse {
         minute: number;
         is_night: boolean;
     };
-    scouted_locations?: {
-        name: string;
-        distance: number;
-        direction: string;
-    }[];
+    scouted_locations?: ScoutedLocation[];
     available_actions?: string[];
 }
 
@@ -342,6 +364,13 @@ export const actionDialogue = async (playerId: string, choice: string): Promise<
     const response = await axios.post(`${API_URL}/action/dialogue`, {
         player_id: playerId,
         choice
+    });
+    return response.data;
+};
+
+export const actionEndDialogue = async (playerId: string): Promise<CommandResponse> => {
+    const response = await axios.post(`${API_URL}/action/dialogue/end`, {
+        player_id: playerId
     });
     return response.data;
 };

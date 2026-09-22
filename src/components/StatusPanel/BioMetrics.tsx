@@ -116,7 +116,7 @@ const BioMetrics: React.FC<BioMetricsProps> = ({
 
             {isExpanded && (
                 <div className="space-y-3.5 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    
+
                     {/* HP & MP Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* HP Bar */}
@@ -141,15 +141,15 @@ const BioMetrics: React.FC<BioMetricsProps> = ({
                         <div className="bg-white/5 backdrop-blur-md p-3 rounded-xl border border-white/5 flex flex-col gap-1.5">
                             <div className="flex justify-between items-center">
                                 <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                    <Zap size={12} className="text-stitch-cyan" /> Mana Energy (MP)
+                                    <Zap size={12} className="text-cyan-400" /> Mana Energy (MP)
                                 </span>
-                                <span className="font-bold font-mono text-sm text-stitch-lightBlue drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]">
+                                <span className="font-bold font-mono text-sm text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]">
                                     {stats.mp}<span className="text-[10px] text-slate-500 ml-0.5">/{stats.max_mp}</span>
                                 </span>
                             </div>
                             <div className="w-full h-1.5 bg-black/50 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-stitch-cyan transition-all duration-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+                                    className="h-full bg-cyan-500 transition-all duration-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
                                     style={{ width: `${Math.max(0, Math.min(100, mpPercent))}%` }}
                                 ></div>
                             </div>
