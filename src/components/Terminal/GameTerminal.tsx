@@ -5,9 +5,17 @@ interface GameTerminalProps {
     history: string[];
     onCommand?: (cmd: string) => void;
     onShowHelp?: () => void;
+    isMultiplayerConnected?: boolean;
+    roomPlayersCount?: number;
 }
 
-const GameTerminal: React.FC<GameTerminalProps> = ({ history, onCommand, onShowHelp }) => {
+const GameTerminal: React.FC<GameTerminalProps> = ({
+    history,
+    onCommand,
+    onShowHelp,
+    isMultiplayerConnected = false,
+    roomPlayersCount = 0
+}) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [command, setCommand] = useState('');
@@ -52,15 +60,43 @@ const GameTerminal: React.FC<GameTerminalProps> = ({ history, onCommand, onShowH
                     </div>
                 </div>
                 <div className="flex-1"></div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2.5 sm:gap-3.5">
+                    {/* Multiplayer Neural Net Status Badge */}
+                    <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono border transition-all ${
+                            isMultiplayerConnected
+                                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 shadow-[0_0_8px_rgba(52,211,153,0.25)]'
+                                : 'bg-rose-950/60 text-rose-300 border-rose-500/40'
+                        }`}
+                        title={
+                            isMultiplayerConnected
+                                ? `Neural Net Active (${roomPlayersCount} online in current sector)`
+                                : 'Neural Net Offline - Operating locally'
+                        }
+                    >
+                        <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                                isMultiplayerConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+                            }`}
+                        />
+                        <span className="hidden sm:inline">
+                            {isMultiplayerConnected
+                                ? `Neural Net (${roomPlayersCount} in area)`
+                                : 'Neural Net Offline'}
+                        </span>
+                        <span className="sm:hidden">
+                            {isMultiplayerConnected ? `${roomPlayersCount} online` : 'Offline'}
+                        </span>
+                    </span>
+
                     {onShowHelp && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onShowHelp();
                             }}
-                            className="text-green-600 hover:text-green-300 transition-colors p-1 hover:bg-green-900/20 rounded"
-                            title="Command Protocol Guide"
+                            className="text-green-600 hover:text-green-300 transition-colors p-1 hover:bg-green-900/20 rounded cursor-pointer"
+                            title="Command Protocol Guide (?)"
                         >
                             <HelpCircle size={18} />
                         </button>

@@ -16,6 +16,7 @@ interface BioMetricsProps {
     armor?: GameItem | null;
     onUnequip?: (slot: string) => void;
     onOpenClassSelect?: () => void;
+    onOpenProfile?: () => void;
 }
 
 const BioMetrics: React.FC<BioMetricsProps> = ({
@@ -25,7 +26,8 @@ const BioMetrics: React.FC<BioMetricsProps> = ({
     weapon,
     armor,
     onUnequip,
-    onOpenClassSelect
+    onOpenClassSelect,
+    onOpenProfile
 }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const formattedHour = time?.hour.toString().padStart(2, '0') || '00';
@@ -64,13 +66,17 @@ const BioMetrics: React.FC<BioMetricsProps> = ({
 
             {/* Operator Identifier & Gold Display */}
             <div className="absolute -top-3.5 left-5 right-5 flex items-center justify-between pointer-events-none">
-                <div className="flex items-center gap-2 bg-black/90 px-3 py-1 rounded-lg border border-stitch-cyan/50 shadow-[0_0_10px_rgba(6,182,212,0.3)] pointer-events-auto">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-white font-mono text-xs font-bold uppercase tracking-widest">{name}</span>
+                <button
+                    onClick={onOpenProfile}
+                    className="flex items-center gap-2 bg-black/90 hover:bg-slate-900 px-3 py-1 rounded-lg border border-stitch-cyan/50 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:shadow-[0_0_15px_rgba(6,182,212,0.6)] pointer-events-auto transition-all cursor-pointer group"
+                    title="View Operator Profile & Session Details"
+                >
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse group-hover:scale-125 transition-transform"></div>
+                    <span className="text-white font-mono text-xs font-bold uppercase tracking-widest group-hover:text-stitch-cyan transition-colors">{name}</span>
                     <span className="text-[10px] text-stitch-lightBlue font-mono font-bold bg-white/10 px-1.5 py-0.2 rounded">
                         LV.{stats.level || 1}
                     </span>
-                </div>
+                </button>
 
                 <div className="flex items-center gap-1.5 bg-black/90 px-3 py-1 rounded-lg border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)] pointer-events-auto">
                     <Coins size={14} className="text-amber-400" />

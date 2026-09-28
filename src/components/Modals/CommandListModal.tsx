@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Search, Terminal as TerminalIcon, Move, Zap, Package, Info } from 'lucide-react';
+import { X, Search, Terminal as TerminalIcon, Move, Zap, Package, Info, Users } from 'lucide-react';
 import { getCommands, type CommandHelp } from '../../api';
 
 interface CommandListModalProps {
@@ -12,6 +12,7 @@ const CategoryIcon = ({ category }: { category: string }) => {
         case 'movement': return <Move size={18} className="text-blue-400" />;
         case 'interaction': return <Zap size={18} className="text-yellow-400" />;
         case 'advanced': return <Package size={18} className="text-purple-400" />;
+        case 'multiplayer': return <Users size={18} className="text-stitch-cyan" />;
         default: return <Info size={18} className="text-emerald-400" />;
     }
 };
@@ -45,7 +46,7 @@ export const CommandListModal: React.FC<CommandListModalProps> = ({ isOpen, onCl
         cmd.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const categories = ['movement', 'general', 'interaction', 'advanced'];
+    const categories = ['movement', 'general', 'interaction', 'advanced', 'multiplayer'];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">

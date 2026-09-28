@@ -4,7 +4,6 @@ import {
     Activity,
     Map,
     Radio,
-    Power,
     ArrowUp,
     ArrowDown,
     ArrowLeft,
@@ -26,7 +25,10 @@ import { ShopModal } from '../components/Modals/ShopModal';
 import { QuestJournalModal } from '../components/Modals/QuestJournalModal';
 import { CraftingModal } from '../components/Modals/CraftingModal';
 import { ClassSelectModal } from '../components/Modals/ClassSelectModal';
+import { PlayerProfileModal } from '../components/Modals/PlayerProfileModal';
 import { SkillBar } from '../components/Combat/SkillBar';
+import { MultiplayerChatPanel } from '../components/Chat/MultiplayerChatPanel';
+import { useMultiplayerSocket } from '../hooks/useMultiplayerSocket';
 import type { CommandResponse } from '../api';
 
 interface MainGameHUDProps {
@@ -92,9 +94,33 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     const [isQuestsOpen, setIsQuestsOpen] = useState(false);
     const [isCraftingOpen, setIsCraftingOpen] = useState(false);
     const [isClassSelectOpen, setIsClassSelectOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isTraveling, setIsTraveling] = useState(false);
     const [isDialogueDismissed, setIsDialogueDismissed] = useState(false);
     const [activeTab, setActiveTab] = useState<'terminal' | 'stats' | 'nav'>('terminal');
+
+    // Multiplayer WebSocket Link & Party Comms
+    const {
+        isConnected: isMultiplayerConnected,
+        roomPlayers,
+        chatMessages,
+        party,
+        pendingInvite,
+        onlinePlayers,
+        sendParty,
+        sendShout,
+        sendWhisper,
+        createParty,
+        inviteToParty,
+        acceptPartyInvite,
+        declinePartyInvite,
+        leaveParty,
+        kickFromParty,
+        refreshOnlinePlayers
+    } = useMultiplayerSocket({
+        playerId: gameState?.player?.id || '',
+        currentLocationId: gameState?.location?.id || ''
+    });
 
     const hasEnemies = (gameState?.location?.enemies?.length || 0) > 0;
     const hasItems = (gameState?.location?.items?.length || 0) > 0;
@@ -142,30 +168,6 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
             {/* Main Container */}
             <div className="w-full max-w-7xl flex-1 flex flex-col md:flex-row gap-3 md:gap-5 relative z-20 mx-auto min-h-0">
 
-                {/* Mobile Top Header */}
-                <div className="md:hidden glass-panel p-3 flex-shrink-0 rounded-2xl flex items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                    <h1 className="text-base font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-stitch-cyan to-stitch-lightBlue uppercase">
-                        <span className="text-white">Mystic Explorers</span>
-                    </h1>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setIsQuestsOpen(true)}
-                            className="text-fuchsia-400 p-1.5 rounded-lg hover:bg-white/5 relative cursor-pointer"
-                            title="Quests"
-                        >
-                            <Scroll size={18} />
-                            {activeQuestsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-fuchsia-500 text-black font-bold text-[9px] rounded-full flex items-center justify-center animate-pulse">
-                                    {activeQuestsCount}
-                                </span>
-                            )}
-                        </button>
-                        <button onClick={onLogout} className="text-stitch-cyan/50 hover:text-stitch-orange p-1.5">
-                            <Power size={18} />
-                        </button>
-                    </div>
-                </div>
-
                 {/* Center Column: Terminal (Hidden on mobile if not active tab) */}
                 <div className={`w-full flex-1 flex flex-col gap-3 min-h-0 ${activeTab === 'terminal' ? 'flex' : 'hidden md:flex'}`}>
                     
@@ -174,6 +176,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                         history={history}
                         onCommand={onCommand}
                         onShowHelp={() => setIsHelpOpen(true)}
+                        isMultiplayerConnected={isMultiplayerConnected}
+                        roomPlayersCount={roomPlayers.length}
                     />
 
                     {/* Mobile Quick Action Directional Pad */}
@@ -220,6 +224,7 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                     armor={gameState.player.equipment?.armor}
                                     onUnequip={onUnequip}
                                     onOpenClassSelect={() => setIsClassSelectOpen(true)}
+                                    onOpenProfile={() => setIsProfileOpen(true)}
                                 />
 
                                 {/* Quick System Actions Matrix */}
@@ -275,11 +280,14 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                         enemies={gameState.location.enemies}
                                         interactables={gameState.location.interactables || []}
                                         availableActions={gameState.available_actions || []}
+                                        presentPlayers={roomPlayers}
+                                        currentPlayerId={gameState.player?.id}
                                         onTake={(item) => onCommand(`take ${item}`)}
                                         onAttack={(enemy) => onCommand(`attack ${enemy}`)}
                                         onTalk={handleTalkToNpc}
                                         onOpenShop={() => setIsShopOpen(true)}
                                         onOpenCrafting={() => setIsCraftingOpen(true)}
+                                        onWhisperPlayer={(target) => sendWhisper(target, 'Hello')}
                                     />
                                 </div>
 
@@ -473,6 +481,41 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                 onClose={() => setIsRadarOpen(false)}
                 scoutedLocations={gameState?.scouted_locations}
             />
+
+            {/* 11. Real-time Multiplayer Chat & Party Comms */}
+            <MultiplayerChatPanel
+                isConnected={isMultiplayerConnected}
+                messages={chatMessages}
+                party={party}
+                pendingInvite={pendingInvite}
+                onlinePlayers={onlinePlayers}
+                onSendParty={sendParty}
+                onSendShout={sendShout}
+                onSendWhisper={sendWhisper}
+                onCreateParty={createParty}
+                onInviteToParty={inviteToParty}
+                onAcceptInvite={acceptPartyInvite}
+                onDeclineInvite={declinePartyInvite}
+                onLeaveParty={leaveParty}
+                onKickPartyMember={kickFromParty}
+                onRefreshOnline={refreshOnlinePlayers}
+            />
+
+            {/* 12. Operator Profile & Dossier Modal */}
+            {gameState?.player && (
+                <PlayerProfileModal
+                    isOpen={isProfileOpen}
+                    onClose={() => setIsProfileOpen(false)}
+                    playerId={gameState.player.id}
+                    playerName={gameState.player.name}
+                    stats={gameState.player.stats}
+                    equipment={gameState.player.equipment}
+                    waypointsCount={Object.keys(gameState.player.waypoints || {}).length}
+                    activeQuestsCount={Object.keys(gameState.player.active_quests || {}).length}
+                    currentWeight={gameState.player.current_weight || 0}
+                    onLogout={onLogout}
+                />
+            )}
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002/api/v1';
 
 export interface GameItem {
     id?: string;
@@ -175,6 +175,7 @@ export interface CommandResponse {
             z: number;
         };
         is_dark?: boolean;
+        present_players?: Array<{ id: string; name: string; character_class: string }>;
     };
     time: {
         total_ticks: number;
@@ -185,6 +186,7 @@ export interface CommandResponse {
     };
     scouted_locations?: ScoutedLocation[];
     available_actions?: string[];
+    token?: string;
 }
 
 export interface CommandHelp {
@@ -196,8 +198,48 @@ export interface CommandHelp {
 }
 
 // -------------------------------------------------------------
-// Authentication & Core API Calls
+// Authentication & Session Management
 // -------------------------------------------------------------
+
+export const getSessionToken = (): string | null => 
+    sessionStorage.getItem('me_session_token') || localStorage.getItem('me_session_token');
+
+export const setSessionToken = (token: string): void => {
+    sessionStorage.setItem('me_session_token', token);
+    localStorage.setItem('me_session_token', token);
+};
+
+export const clearSessionToken = (): void => {
+    sessionStorage.removeItem('me_session_token');
+    localStorage.removeItem('me_session_token');
+};
+
+export const getWebSocketUrl = (playerId: string, token?: string): string => {
+    let wsBase: string;
+    if (import.meta.env.VITE_WS_URL) {
+        wsBase = import.meta.env.VITE_WS_URL;
+    } else {
+        const isSecure = window.location.protocol === 'https:' || API_URL.startsWith('https:');
+        const proto = isSecure ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname || 'localhost';
+        
+        let port = '8002';
+        try {
+            const parsed = new URL(API_URL);
+            if (parsed.port) {
+                port = parsed.port;
+            }
+        } catch {
+            port = '8002';
+        }
+        
+        wsBase = `${proto}//${hostname}:${port}/ws/game`;
+    }
+    const params = new URLSearchParams();
+    if (token) params.append('token', token);
+    if (playerId) params.append('player_id', playerId);
+    return `${wsBase}?${params.toString()}`;
+};
 
 export const sendCommand = async (playerId: string, command: string): Promise<CommandResponse> => {
     const response = await axios.post(`${API_URL}/command`, {
@@ -207,17 +249,23 @@ export const sendCommand = async (playerId: string, command: string): Promise<Co
     return response.data;
 };
 
-export const loginPlayer = async (name: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/login`, { name });
+export const loginPlayer = async (name: string, password?: string): Promise<CommandResponse> => {
+    const response = await axios.post(`${API_URL}/auth/login`, { name, password });
+    if (response.data.token) {
+        setSessionToken(response.data.token);
+    }
     return response.data;
 };
 
-export const registerPlayer = async (name: string, characterClass?: string): Promise<CommandResponse> => {
-    const params = new URLSearchParams({ name });
-    if (characterClass) {
-        params.append('character_class', characterClass);
+export const registerPlayer = async (name: string, characterClass?: string, password?: string): Promise<CommandResponse> => {
+    const response = await axios.post(`${API_URL}/auth/register`, {
+        name,
+        password,
+        character_class: characterClass || 'adventurer'
+    });
+    if (response.data.token) {
+        setSessionToken(response.data.token);
     }
-    const response = await axios.post(`${API_URL}/start?${params.toString()}`);
     return response.data;
 };
 

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Terminal, Sparkles, Sword, Crosshair, Compass } from 'lucide-react';
+import { Terminal, Sparkles, Sword, Crosshair, Compass, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 interface LoginScreenProps {
-    onLogin: (name: string) => Promise<void>;
-    onRegister: (name: string, characterClass?: string) => Promise<void>;
+    onLogin: (name: string, password?: string) => Promise<void>;
+    onRegister: (name: string, characterClass?: string, password?: string) => Promise<void>;
 }
 
 const CLASSES = [
@@ -16,6 +16,8 @@ const CLASSES = [
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
     const [name, setName] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [selectedClass, setSelectedClass] = useState('adventurer');
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -30,9 +32,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
         setError('');
         try {
             if (!isRegisterMode) {
-                await onLogin(name.trim());
+                await onLogin(name.trim(), password || undefined);
             } else {
-                await onRegister(name.trim(), selectedClass);
+                await onRegister(name.trim(), selectedClass, password || undefined);
             }
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -86,6 +88,35 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onRegister }) => {
                             autoComplete="off"
                             disabled={isLoading}
                         />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1.5 px-1">
+                            <label className="block text-stitch-cyan text-xs font-bold uppercase tracking-widest">
+                                Security Cipher
+                            </label>
+                            <span className="text-[10px] font-mono text-slate-500 uppercase">
+                                (Optional)
+                            </span>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleAction(); }}
+                                className="w-full bg-black/40 border border-stitch-blue/50 rounded-lg pl-4 pr-10 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-stitch-cyan focus:ring-1 focus:ring-stitch-cyan transition-all shadow-inner text-sm"
+                                placeholder="Enter password / passkey..."
+                                disabled={isLoading}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-stitch-cyan transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Class Selector (Visible in Register Mode) */}

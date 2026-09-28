@@ -43,9 +43,10 @@ export const useGameEngine = () => {
 
     useEffect(() => {
         const initGame = async () => {
-            const storedId = localStorage.getItem('me_player_id');
+            const storedId = sessionStorage.getItem('me_player_id') || localStorage.getItem('me_player_id');
             if (storedId) {
                 setPlayerId(storedId);
+                sessionStorage.setItem('me_player_id', storedId);
                 try {
                     const res = await sendCommand(storedId, 'look');
                     const inventory = await getPlayerInventory(storedId);
@@ -60,6 +61,7 @@ export const useGameEngine = () => {
                         return prev;
                     });
                 } catch {
+                    sessionStorage.removeItem('me_player_id');
                     localStorage.removeItem('me_player_id');
                     localStorage.removeItem('me_game_history');
                     setPlayerId('');
@@ -71,25 +73,27 @@ export const useGameEngine = () => {
         initGame();
     }, []);
 
-    const handleLogin = async (name: string) => {
-        const res = await loginPlayer(name);
+    const handleLogin = async (name: string, password?: string) => {
+        const res = await loginPlayer(name, password);
         const newId = res.player.id;
         const inventory = await getPlayerInventory(newId);
         res.player.inventory = inventory;
 
         setPlayerId(newId);
+        sessionStorage.setItem('me_player_id', newId);
         localStorage.setItem('me_player_id', newId);
         setGameState(res);
         setHistory(prev => [...prev, `[SYSTEM] Operator ${name} authenticated.`, res.message]);
     };
 
-    const handleRegister = async (name: string, characterClass?: string) => {
-        const res = await registerPlayer(name, characterClass);
+    const handleRegister = async (name: string, characterClass?: string, password?: string) => {
+        const res = await registerPlayer(name, characterClass, password);
         const newId = res.player.id;
         const inventory = await getPlayerInventory(newId);
         res.player.inventory = inventory;
 
         setPlayerId(newId);
+        sessionStorage.setItem('me_player_id', newId);
         localStorage.setItem('me_player_id', newId);
         setGameState(res);
         setHistory(prev => [
@@ -99,12 +103,15 @@ export const useGameEngine = () => {
         ]);
     };
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
+        sessionStorage.removeItem('me_player_id');
+        sessionStorage.removeItem('me_session_token');
         localStorage.removeItem('me_player_id');
+        localStorage.removeItem('me_session_token');
         setPlayerId('');
         setGameState(null);
         setHistory(["Session terminated. Awaiting new connection..."]);
-    };
+    }, []);
 
     const handleFetchInventory = useCallback(async () => {
         if (!playerId) return;
@@ -163,12 +170,17 @@ export const useGameEngine = () => {
 
     const handleCommand = useCallback(async (cmd: string) => {
         if (!cmd.trim()) return;
-        if (cmd.toLowerCase() === 'clear') {
+        const normalized = cmd.trim().toLowerCase();
+        if (normalized === 'clear') {
             setHistory(["Welcome to Mystic Explorers. Type 'start' or 'help' to connect."]);
             return;
         }
+        if (normalized === 'logout' || normalized === 'exit' || normalized === 'quit') {
+            handleLogout();
+            return;
+        }
         await executeAction(cmd, () => sendCommand(playerId, cmd), true);
-    }, [playerId, executeAction]);
+    }, [playerId, executeAction, handleLogout]);
 
     const handleEquip = useCallback((itemName: string) => {
         executeAction(`equip ${itemName}`, () => actionEquip(playerId, itemName), true);

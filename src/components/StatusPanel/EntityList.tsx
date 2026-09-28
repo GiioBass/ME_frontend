@@ -1,5 +1,5 @@
 import React from 'react';
-import { Backpack, Skull, MessageSquare, ShoppingBag, Wrench } from 'lucide-react';
+import { Backpack, Skull, MessageSquare, ShoppingBag, Wrench, Users } from 'lucide-react';
 import { type GameItem, type GameEnemy } from '../../api';
 
 interface EntityListProps {
@@ -7,11 +7,14 @@ interface EntityListProps {
     enemies: GameEnemy[];
     interactables?: string[];
     availableActions?: string[];
+    presentPlayers?: Array<{ id: string; name: string; character_class: string }>;
+    currentPlayerId?: string;
     onTake: (itemName: string) => void;
     onAttack: (enemyName: string) => void;
     onTalk?: (npcName: string) => void;
     onOpenShop?: (npcName?: string) => void;
     onOpenCrafting?: () => void;
+    onWhisperPlayer?: (playerName: string) => void;
 }
 
 interface GroupedItem extends GameItem {
@@ -23,12 +26,19 @@ const EntityList: React.FC<EntityListProps> = ({
     enemies,
     interactables = [],
     availableActions = [],
+    presentPlayers = [],
+    currentPlayerId = '',
     onTake,
     onAttack,
     onTalk,
     onOpenShop,
-    onOpenCrafting
+    onOpenCrafting,
+    onWhisperPlayer
 }) => {
+    // Filter other players in room
+    const otherPlayers = React.useMemo(() => {
+        return (presentPlayers || []).filter(p => p.id !== currentPlayerId);
+    }, [presentPlayers, currentPlayerId]);
     // Group ground items by name to display stacks
     const groupedItems = React.useMemo(() => {
         if (!items) return [];
@@ -64,6 +74,36 @@ const EntityList: React.FC<EntityListProps> = ({
 
     return (
         <div className="mt-2 space-y-4 flex-shrink-0">
+            {/* Online Adventurers in Area */}
+            {otherPlayers.length > 0 && (
+                <div className="bg-emerald-950/20 p-3 rounded-xl border border-emerald-800/40">
+                    <span className="text-emerald-400 font-bold block mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
+                        <Users size={14} className="text-emerald-400" /> Adventurers in Sector ({otherPlayers.length})
+                    </span>
+                    <div className="flex flex-col gap-2">
+                        {otherPlayers.map((player) => (
+                            <div key={player.id} className="flex items-center justify-between bg-emerald-900/20 px-3 py-2 rounded-lg border border-emerald-700/30">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></div>
+                                    <div>
+                                        <div className="text-white font-bold text-xs tracking-wide">{player.name}</div>
+                                        <div className="text-[10px] text-emerald-300/70 font-mono capitalize">{player.character_class}</div>
+                                    </div>
+                                </div>
+                                {onWhisperPlayer && (
+                                    <button
+                                        onClick={() => onWhisperPlayer(player.name)}
+                                        className="text-[10px] bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 hover:text-white px-2.5 py-1 rounded border border-purple-500/40 font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.2)]"
+                                    >
+                                        <MessageSquare size={11} /> Whisper
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* NPCs Detected */}
             {npcs.length > 0 && (
                 <div className="bg-cyan-950/20 p-3 rounded-xl border border-cyan-800/30">
