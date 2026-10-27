@@ -1,68 +1,125 @@
-# Requisitos para compilar el APK (Capacitor)
+# Guía de Compilación Móvil Android (Capacitor)
 
-Para convertir esta aplicación web en un **APK instalable** en teléfonos Android, usaremos **Capacitor**, que envuelve la web dentro de una aplicación nativa. 
+Esta guía detalla los requisitos, configuración de red y comandos para compilar la aplicación web en un **APK instalable para Android** usando **Capacitor 8**.
 
-### ¿Qué necesitas instalar en tu máquina (Ubuntu/Linux)?
+---
 
-1. **Android Studio y Android SDK:**
-   - Necesitas descargar e instalar Android Studio.
-   - Asegúrate de instalar el **Android SDK**, las **SDK Platform-Tools** y un **emulador** (opcional si pruebas directo en tu teléfono físico).
-   
-2. **Configuración de Variables de Entorno:**
-   - Debes exportar `ANDROID_HOME` en tu `~/.bashrc` o `~/.zshrc`:
-     ```bash
-     export ANDROID_HOME=$HOME/Android/Sdk
-     export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
-     ```
+## 1. Requisitos del Sistema y Herramientas (Linux / Fedora)
 
-3. **Java Development Kit (JDK):**
-   - Android requiere Java (usualmente OpenJDK 17 o superior).
-   - Puedes instalarlo con: `sudo apt install openjdk-17-jdk`.
+Capacitor 8 requiere **Java 21** y las herramientas de compilación de Android (API 35 o 36).
 
-### Construcción y Sincronización de la Aplicación
+### A. Java Development Kit (JDK 21)
+El proyecto requiere JDK 21 (usamos Eclipse Temurin 21):
+- Ubicación instalada: `~/.jdk/temurin-21`
 
-Dado que la aplicación móvil correra separada de tu entorno local de desarrollo, es crítico **configurar la dirección IP** por donde la app del celular buscará al backend de Python.
+### B. Android SDK & Herramientas de Línea de Comandos
+- Ubicación instalada: `~/Android/Sdk`
+- Componentes instalados:
+  - `cmdline-tools/latest` (`sdkmanager`)
+  - `platform-tools` (`adb`)
+  - `platforms;android-36` y `platforms;android-35`
+  - `build-tools;36.0.0` y `build-tools;35.0.0`
 
-#### 1. Configurar la URL del Backend (`.env`)
+### C. Variables de Entorno
+Deben estar presentes en tu archivo `~/.bashrc` (o `~/.zshrc`):
 
-En la raíz del proyecto web (`ME_frontend/`), debe existir un archivo `.env`. Si no está, créalo.
-
-Configura la variable `VITE_API_URL` apuntando a la **IP de tu computadora en tu red local** (NO uses `localhost` ni `127.0.0.1`, o el celular se buscará a sí mismo).
-
-Ejemplo de cómo debe verse tu archivo `.env`:
-```env
-# Reemplaza la IP por la IPv4 real de tu máquina (búscala con el comando ipconfig en Windows o ip a en Linux)
-# y el puerto donde corre tu backend (por defecto 8001):
-VITE_API_URL=http://192.168.1.15:8001/api/v1
+```bash
+# Entorno de Compilación Android & Java 21
+export JAVA_HOME="$HOME/.jdk/temurin-21"
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-*(Nota: Asegúrate también de que tu servidor de Python backend esté escuchando en la IP `0.0.0.0` para poder recibir peticiones externas).*
+Para aplicar cambios en la terminal actual:
+```bash
+source ~/.bashrc
+```
 
-#### 2. Compilar el Frontend
+---
 
-Cada vez que hagas un cambio en el código (ya sean componentes de React, estilos o variables de entorno en el `.env`), **siempre** debes compilar el proyecto web primero:
+## 2. Configuración de Red para el Backend (`.env`)
+
+> [!IMPORTANT]
+> En un teléfono o emulador Android, `localhost` o `127.0.0.1` apunta al **propio dispositivo móvil**, no a tu computadora de desarrollo.
+
+Configura la variable `VITE_API_URL` en el archivo `.env` de [ME_frontend](file:///var/www/html/ME_frontend/.env):
+
+```env
+# Opción A: Teléfono físico conectado a la misma red Wi-Fi
+# (Obtén la IP de tu PC con `ip a` o `hostname -I`)
+VITE_API_URL=http://192.168.1.15:8001/api/v1
+
+# Opción B: Emulador oficial de Android Studio
+VITE_API_URL=http://10.0.2.2:8001/api/v1
+```
+
+*(Asegúrate de que el backend de Python esté corriendo escuchando en `0.0.0.0:8001`)*.
+
+---
+
+## 3. Comandos de Compilación
+
+### Opción Rápida (Todo en uno)
+Genera el build web optimizado, sincroniza assets hacia la carpeta nativa y compila el APK con Gradle:
 
 ```bash
 cd /var/www/html/ME_frontend
-npm run build
+npm run build:android
 ```
 
-#### 3. Sincronizar hacia Android
-
-Luego de construir la web en la carpeta `dist/`, usa este comando de Capacitor para copiar inyectando los archivos HTML/JS hacia las entrañas nativas del código de Android (`android/app/src/main/assets/...`):
-
-```bash
-npx cap sync android
+El archivo APK resultante se genera en:
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-#### 4. Producir el APK o lanzar Emulador
+---
 
-Una vez esté la carpeta nativa actualizada, simplemente lanza Android Studio:
+### Opción Paso a Paso (Línea de Comandos)
+
+Si deseas ejecutar cada paso por separado:
+
+1. **Compilar el frontend web (`dist/`)**:
+   ```bash
+   npm run build
+   ```
+
+2. **Sincronizar assets web con Android**:
+   ```bash
+   npx cap sync android
+   ```
+
+3. **Compilar el APK con el wrapper de Gradle**:
+   ```bash
+   cd android
+   ./gradlew assembleDebug
+   ```
+
+---
+
+## 4. Instalación del APK en Dispositivo Físico (Vía USB / ADB)
+
+1. Conecta tu teléfono Android por cable USB y asegúrate de tener activada la opción **Depuración por USB** (USB Debugging) en las *Opciones de desarrollador*.
+2. Verifica que `adb` reconozca tu dispositivo:
+   ```bash
+   adb devices
+   ```
+3. Instala el APK compilado directamente:
+   ```bash
+   cd /var/www/html/ME_frontend/android
+   adb install app/build/outputs/apk/debug/app-debug.apk
+   ```
+
+---
+
+## 5. Compilación Vía Android Studio (GUI)
+
+Si prefieres trabajar con la interfaz gráfica de Android Studio:
 
 ```bash
 npx cap open android
 ```
 
-- En Android Studio espera que cargue completamente el `Gradle Sync`.
-- Selecciona tu emulador o tu dispositivo físico conectado por USB.
-- Haz clic en el botón verde de Play (`Run 'app'`) para correr e instalar el APK, o en el menú superior anda a `Build > Build Bundle(s) / APK(s) > Build APK(s)` si solo quieres generar el archivo para compartirlo.
+1. Espera a que Android Studio termine el proceso de **Gradle Sync**.
+2. Conecta tu teléfono o selecciona un Emulador (AVD).
+3. Haz clic en el botón **Run 'app'** (ícono verde de Play) o en el menú superior selecciona:
+   **Build > Build Bundle(s) / APK(s) > Build APK(s)**.

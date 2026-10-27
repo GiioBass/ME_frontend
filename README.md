@@ -25,33 +25,51 @@ Client web interface built with React 19, TypeScript, TailwindCSS, and Vite.
 
 ## Compilación Web & Android (APK / Capacitor)
 
-### 1. Compilar el Frontend Web
-Genera la carpeta de producción `dist/` optimizada:
+### Compilación Rápida (En un solo comando)
+Ejecuta la compilación web, sincroniza assets y genera el APK de depuración directamente:
 ```bash
-npm run build
+npm run build:android
+```
+El APK generado estará en:
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### 2. Sincronizar con el proyecto nativo de Android
-Sincroniza los assets web hacia la carpeta nativa `android/`:
-```bash
-npx cap sync android
-```
+---
 
-### 3. Generar el APK
-- **Vía Android Studio**:
-  ```bash
-  npx cap open android
-  ```
-  O abre la carpeta `ME_frontend/android` en Android Studio y selecciona **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-- **Vía Línea de Comandos (con JDK y Android SDK configurados)**:
-  ```bash
-  cd android
-  ./gradlew assembleDebug
-  # El APK generado estará en: android/app/build/outputs/apk/debug/app-debug.apk
-  ```
+### Compilación Paso a Paso (CLI / Terminal)
+
+1. **Compilar el Frontend Web**:
+   ```bash
+   npm run build
+   ```
+2. **Sincronizar con el proyecto nativo de Android**:
+   ```bash
+   npx cap sync android
+   ```
+3. **Compilar el APK con Gradle**:
+   ```bash
+   cd android
+   ./gradlew assembleDebug
+   ```
+
+4. **Instalar el APK en un dispositivo físico conectado por USB**:
+   ```bash
+   adb install app/build/outputs/apk/debug/app-debug.apk
+   ```
+
+---
+
+### Compilación Vía Android Studio (GUI)
+Si prefieres usar la interfaz visual de Android Studio:
+```bash
+npx cap open android
+```
+- Espera la sincronización de Gradle.
+- Selecciona **Build > Build Bundle(s) / APK(s) > Build APK(s)** o presiona el botón **Run** para desplegar en tu emulador/teléfono.
 
 > [!TIP]
-> Para más detalles sobre la configuración de red y la IP para dispositivos físicos o emuladores, consulta [mobile_build_guide.md](file:///var/www/html/ME_frontend/docs/mobile_build_guide.md).
+> Para la configuración de variables de entorno (`JAVA_HOME`, `ANDROID_HOME`) y la configuración de IP de red para el backend, consulta la [Guía de Compilación Móvil](file:///var/www/html/ME_frontend/docs/mobile_build_guide.md).
 
 ---
 
