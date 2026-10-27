@@ -1,6 +1,39 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002/api/v1';
+export const DEFAULT_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001/api/v1';
+
+export const getApiUrl = (): string => {
+    const stored = localStorage.getItem('ME_API_URL');
+    if (stored) return stored.trim().replace(/\/+$/, '');
+    return DEFAULT_API_URL;
+};
+
+export const setApiUrl = (url: string): void => {
+    const cleaned = url.trim().replace(/\/+$/, '');
+    localStorage.setItem('ME_API_URL', cleaned);
+};
+
+export const resetApiUrl = (): void => {
+    localStorage.removeItem('ME_API_URL');
+};
+
+export const testServerConnection = async (targetUrl?: string): Promise<{ success: boolean; message: string; latencyMs: number }> => {
+    const url = (targetUrl || getApiUrl()).replace(/\/+$/, '');
+    const startTime = Date.now();
+    try {
+        await axios.get(`${url}/commands`, { timeout: 3500 });
+        const latency = Date.now() - startTime;
+        return { success: true, message: `Conexión exitosa (${latency}ms)`, latencyMs: latency };
+    } catch (err) {
+        if (axios.isAxiosError(err) && err.response) {
+            const latency = Date.now() - startTime;
+            return { success: true, message: `Servidor respondió (${err.response.status}) en ${latency}ms`, latencyMs: latency };
+        }
+        return { success: false, message: 'No se pudo conectar al servidor. Revisa IP y puerto.', latencyMs: 0 };
+    }
+};
+
+export const API_URL = getApiUrl();
 
 export interface GameItem {
     id?: string;
@@ -219,21 +252,16 @@ export const getWebSocketUrl = (playerId: string, token?: string): string => {
     if (import.meta.env.VITE_WS_URL) {
         wsBase = import.meta.env.VITE_WS_URL;
     } else {
-        const isSecure = window.location.protocol === 'https:' || API_URL.startsWith('https:');
-        const proto = isSecure ? 'wss:' : 'ws:';
-        const hostname = window.location.hostname || 'localhost';
-        
-        let port = '8002';
+        const currentApiUrl = getApiUrl();
         try {
-            const parsed = new URL(API_URL);
-            if (parsed.port) {
-                port = parsed.port;
-            }
+            const parsed = new URL(currentApiUrl.startsWith('http') ? currentApiUrl : `http://${currentApiUrl}`);
+            const isSecure = parsed.protocol === 'https:';
+            const proto = isSecure ? 'wss:' : 'ws:';
+            const host = parsed.host; // includes IP and port e.g. 192.168.1.15:8001
+            wsBase = `${proto}//${host}/ws/game`;
         } catch {
-            port = '8002';
+            wsBase = 'ws://localhost:8001/ws/game';
         }
-        
-        wsBase = `${proto}//${hostname}:${port}/ws/game`;
     }
     const params = new URLSearchParams();
     if (token) params.append('token', token);
@@ -242,7 +270,7 @@ export const getWebSocketUrl = (playerId: string, token?: string): string => {
 };
 
 export const sendCommand = async (playerId: string, command: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/command`, {
+    const response = await axios.post(`${getApiUrl()}/command`, {
         player_id: playerId,
         command: command
     });
@@ -250,7 +278,7 @@ export const sendCommand = async (playerId: string, command: string): Promise<Co
 };
 
 export const loginPlayer = async (name: string, password?: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/auth/login`, { name, password });
+    const response = await axios.post(`${getApiUrl()}/auth/login`, { name, password });
     if (response.data.token) {
         setSessionToken(response.data.token);
     }
@@ -258,7 +286,7 @@ export const loginPlayer = async (name: string, password?: string): Promise<Comm
 };
 
 export const registerPlayer = async (name: string, characterClass?: string, password?: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/auth/register`, {
+    const response = await axios.post(`${getApiUrl()}/auth/register`, {
         name,
         password,
         character_class: characterClass || 'adventurer'
@@ -270,14 +298,14 @@ export const registerPlayer = async (name: string, characterClass?: string, pass
 };
 
 export const getPlayerInventory = async (playerId: string): Promise<GameItem[]> => {
-    const response = await axios.post(`${API_URL}/player/inventory`, {
+    const response = await axios.post(`${getApiUrl()}/player/inventory`, {
         player_id: playerId
     });
     return response.data;
 };
 
 export const getCommands = async (): Promise<CommandHelp[]> => {
-    const response = await axios.get(`${API_URL}/commands`);
+    const response = await axios.get(`${getApiUrl()}/commands`);
     return response.data;
 };
 
@@ -286,7 +314,7 @@ export const getCommands = async (): Promise<CommandHelp[]> => {
 // -------------------------------------------------------------
 
 export const actionMove = async (playerId: string, direction: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/move`, {
+    const response = await axios.post(`${getApiUrl()}/action/move`, {
         player_id: playerId,
         direction
     });
@@ -294,7 +322,7 @@ export const actionMove = async (playerId: string, direction: string): Promise<C
 };
 
 export const actionTake = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/take`, {
+    const response = await axios.post(`${getApiUrl()}/action/take`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -302,7 +330,7 @@ export const actionTake = async (playerId: string, itemName: string): Promise<Co
 };
 
 export const actionDrop = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/drop`, {
+    const response = await axios.post(`${getApiUrl()}/action/drop`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -310,7 +338,7 @@ export const actionDrop = async (playerId: string, itemName: string): Promise<Co
 };
 
 export const actionEquip = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/equip`, {
+    const response = await axios.post(`${getApiUrl()}/action/equip`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -318,7 +346,7 @@ export const actionEquip = async (playerId: string, itemName: string): Promise<C
 };
 
 export const actionUnequip = async (playerId: string, slot: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/unequip`, {
+    const response = await axios.post(`${getApiUrl()}/action/unequip`, {
         player_id: playerId,
         slot
     });
@@ -326,7 +354,7 @@ export const actionUnequip = async (playerId: string, slot: string): Promise<Com
 };
 
 export const actionAttack = async (playerId: string, targetName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/attack`, {
+    const response = await axios.post(`${getApiUrl()}/action/attack`, {
         player_id: playerId,
         target_name: targetName
     });
@@ -334,14 +362,14 @@ export const actionAttack = async (playerId: string, targetName: string): Promis
 };
 
 export const actionScout = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/scout`, {
+    const response = await axios.post(`${getApiUrl()}/action/scout`, {
         player_id: playerId
     });
     return response.data;
 };
 
 export const actionCamp = async (playerId: string, campName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/camp`, {
+    const response = await axios.post(`${getApiUrl()}/action/camp`, {
         player_id: playerId,
         camp_name: campName
     });
@@ -349,7 +377,7 @@ export const actionCamp = async (playerId: string, campName: string): Promise<Co
 };
 
 export const actionTravel = async (playerId: string, waypointName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/travel`, {
+    const response = await axios.post(`${getApiUrl()}/action/travel`, {
         player_id: playerId,
         waypoint_name: waypointName
     });
@@ -357,7 +385,7 @@ export const actionTravel = async (playerId: string, waypointName: string): Prom
 };
 
 export const actionStore = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/store`, {
+    const response = await axios.post(`${getApiUrl()}/action/store`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -365,7 +393,7 @@ export const actionStore = async (playerId: string, itemName: string): Promise<C
 };
 
 export const actionRetrieve = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/retrieve`, {
+    const response = await axios.post(`${getApiUrl()}/action/retrieve`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -373,7 +401,7 @@ export const actionRetrieve = async (playerId: string, itemName: string): Promis
 };
 
 export const actionConsume = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/consume`, {
+    const response = await axios.post(`${getApiUrl()}/action/consume`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -381,7 +409,7 @@ export const actionConsume = async (playerId: string, itemName: string): Promise
 };
 
 export const actionFill = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/fill`, {
+    const response = await axios.post(`${getApiUrl()}/action/fill`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -389,7 +417,7 @@ export const actionFill = async (playerId: string, itemName: string): Promise<Co
 };
 
 export const actionRest = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/command`, {
+    const response = await axios.post(`${getApiUrl()}/command`, {
         player_id: playerId,
         command: "rest"
     });
@@ -401,7 +429,7 @@ export const actionRest = async (playerId: string): Promise<CommandResponse> => 
 // -------------------------------------------------------------
 
 export const actionTalk = async (playerId: string, npcName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/talk`, {
+    const response = await axios.post(`${getApiUrl()}/action/talk`, {
         player_id: playerId,
         npc_name: npcName
     });
@@ -409,7 +437,7 @@ export const actionTalk = async (playerId: string, npcName: string): Promise<Com
 };
 
 export const actionDialogue = async (playerId: string, choice: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/dialogue`, {
+    const response = await axios.post(`${getApiUrl()}/action/dialogue`, {
         player_id: playerId,
         choice
     });
@@ -417,14 +445,14 @@ export const actionDialogue = async (playerId: string, choice: string): Promise<
 };
 
 export const actionEndDialogue = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/dialogue/end`, {
+    const response = await axios.post(`${getApiUrl()}/action/dialogue/end`, {
         player_id: playerId
     });
     return response.data;
 };
 
 export const actionBuy = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/buy`, {
+    const response = await axios.post(`${getApiUrl()}/action/buy`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -432,7 +460,7 @@ export const actionBuy = async (playerId: string, itemName: string): Promise<Com
 };
 
 export const actionSell = async (playerId: string, itemName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/sell`, {
+    const response = await axios.post(`${getApiUrl()}/action/sell`, {
         player_id: playerId,
         item_name: itemName
     });
@@ -444,14 +472,14 @@ export const actionSell = async (playerId: string, itemName: string): Promise<Co
 // -------------------------------------------------------------
 
 export const actionQuests = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/quests`, {
+    const response = await axios.post(`${getApiUrl()}/action/quests`, {
         player_id: playerId
     });
     return response.data;
 };
 
 export const actionQuestTurnIn = async (playerId: string, questId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/quest/turnin`, {
+    const response = await axios.post(`${getApiUrl()}/action/quest/turnin`, {
         player_id: playerId,
         quest_id: questId
     });
@@ -463,7 +491,7 @@ export const actionQuestTurnIn = async (playerId: string, questId: string): Prom
 // -------------------------------------------------------------
 
 export const actionSelectClass = async (playerId: string, characterClass: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/class`, {
+    const response = await axios.post(`${getApiUrl()}/action/class`, {
         player_id: playerId,
         character_class: characterClass
     });
@@ -471,7 +499,7 @@ export const actionSelectClass = async (playerId: string, characterClass: string
 };
 
 export const actionUseSkill = async (playerId: string, skillName: string, targetName?: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/skill`, {
+    const response = await axios.post(`${getApiUrl()}/action/skill`, {
         player_id: playerId,
         skill_name: skillName,
         target_name: targetName
@@ -480,7 +508,7 @@ export const actionUseSkill = async (playerId: string, skillName: string, target
 };
 
 export const actionGetSkills = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/skills`, {
+    const response = await axios.post(`${getApiUrl()}/action/skills`, {
         player_id: playerId
     });
     return response.data;
@@ -491,7 +519,7 @@ export const actionGetSkills = async (playerId: string): Promise<CommandResponse
 // -------------------------------------------------------------
 
 export const actionCraft = async (playerId: string, recipeName: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/craft`, {
+    const response = await axios.post(`${getApiUrl()}/action/craft`, {
         player_id: playerId,
         recipe_name: recipeName
     });
@@ -499,7 +527,7 @@ export const actionCraft = async (playerId: string, recipeName: string): Promise
 };
 
 export const actionGetRecipes = async (playerId: string): Promise<CommandResponse> => {
-    const response = await axios.post(`${API_URL}/action/recipes`, {
+    const response = await axios.post(`${getApiUrl()}/action/recipes`, {
         player_id: playerId
     });
     return response.data;

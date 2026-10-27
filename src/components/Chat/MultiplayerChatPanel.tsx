@@ -3,6 +3,8 @@ import { MessageSquare, Users, Send, Radio, X, UserPlus, LogOut, Shield, MapPin,
 import type { ChatMessage, PartyInfo, PartyInvite, OnlinePlayer } from '../../hooks/useMultiplayerSocket';
 
 interface MultiplayerChatPanelProps {
+    isOpen?: boolean;
+    onToggleOpen?: (open: boolean) => void;
     isConnected: boolean;
     messages: ChatMessage[];
     party: PartyInfo | null;
@@ -21,6 +23,8 @@ interface MultiplayerChatPanelProps {
 }
 
 export const MultiplayerChatPanel: React.FC<MultiplayerChatPanelProps> = ({
+    isOpen: controlledIsOpen,
+    onToggleOpen,
     isConnected,
     messages,
     party,
@@ -37,7 +41,12 @@ export const MultiplayerChatPanel: React.FC<MultiplayerChatPanelProps> = ({
     onKickPartyMember,
     onRefreshOnline
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+    const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+    const setIsOpen = (val: boolean) => {
+        if (onToggleOpen) onToggleOpen(val);
+        setInternalIsOpen(val);
+    };
     const [activeTab, setActiveTab] = useState<'all' | 'party' | 'whisper' | 'group'>('all');
     const [inputText, setInputText] = useState('');
     const [whisperTarget, setWhisperTarget] = useState('');
@@ -102,37 +111,39 @@ export const MultiplayerChatPanel: React.FC<MultiplayerChatPanelProps> = ({
     const partyMembersCount = party?.members.length || 0;
 
     return (
-        <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end">
-            {/* Toggle Button */}
+        <>
+            {/* Desktop Toggle Button */}
             {!isOpen && (
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-950/90 border border-stitch-cyan/40 hover:border-stitch-cyan text-stitch-cyan hover:text-white shadow-[0_0_20px_rgba(6,182,212,0.25)] backdrop-blur-md transition-all group cursor-pointer"
-                >
-                    <div className="relative">
-                        <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
-                        <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500 animate-pulse'}`} />
-                    </div>
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider">
-                        Comms Net
-                    </span>
-                    {party && (
-                        <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-1.5 py-0.5 rounded-full border border-emerald-500/40 flex items-center gap-1">
-                            <Shield size={10} />
-                            <span>Party {partyMembersCount}/6</span>
+                <div className="fixed bottom-4 right-4 z-40 hidden md:flex flex-col items-end">
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-950/90 border border-stitch-cyan/40 hover:border-stitch-cyan text-stitch-cyan hover:text-white shadow-[0_0_20px_rgba(6,182,212,0.25)] backdrop-blur-md transition-all group cursor-pointer"
+                    >
+                        <div className="relative">
+                            <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
+                            <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500 animate-pulse'}`} />
+                        </div>
+                        <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                            Comms Net
                         </span>
-                    )}
-                    {pendingInvite && (
-                        <span className="bg-amber-500/30 text-amber-300 text-[10px] font-mono px-1.5 py-0.5 rounded-full border border-amber-500/50 animate-pulse font-bold">
-                            Party Invite!
-                        </span>
-                    )}
-                </button>
+                        {party && (
+                            <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-1.5 py-0.5 rounded-full border border-emerald-500/40 flex items-center gap-1">
+                                <Shield size={10} />
+                                <span>Party {partyMembersCount}/6</span>
+                            </span>
+                        )}
+                        {pendingInvite && (
+                            <span className="bg-amber-500/30 text-amber-300 text-[10px] font-mono px-1.5 py-0.5 rounded-full border border-amber-500/50 animate-pulse font-bold">
+                                Party Invite!
+                            </span>
+                        )}
+                    </button>
+                </div>
             )}
 
-            {/* Chat Box Container */}
+            {/* Chat Box Container: Responsive for Mobile and Desktop */}
             {isOpen && (
-                <div className="w-80 sm:w-96 h-[26rem] flex flex-col rounded-2xl bg-slate-950/95 border border-stitch-cyan/40 shadow-[0_0_30px_rgba(6,182,212,0.2)] backdrop-blur-xl overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+                <div className="fixed inset-x-2 top-[max(env(safe-area-inset-top,32px),32px)] bottom-[76px] md:top-auto md:bottom-4 md:right-4 md:left-auto md:w-96 md:h-[26rem] z-50 flex flex-col rounded-2xl bg-slate-950/95 border border-stitch-cyan/40 shadow-[0_0_30px_rgba(6,182,212,0.3)] backdrop-blur-xl overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
                     {/* Header */}
                     <div className="flex items-center justify-between px-3 py-2 bg-black/60 border-b border-stitch-cyan/20">
                         <div className="flex items-center gap-2">
@@ -522,6 +533,6 @@ export const MultiplayerChatPanel: React.FC<MultiplayerChatPanelProps> = ({
                     )}
                 </div>
             )}
-        </div>
+        </>
     );
 };

@@ -9,6 +9,10 @@ import {
     ArrowLeft,
     ArrowRight,
     Scroll,
+    MessageSquare,
+    ChevronDown,
+    ChevronUp,
+    HelpCircle
 } from 'lucide-react';
 import GameTerminal from '../components/Terminal/GameTerminal';
 import BioMetrics from '../components/StatusPanel/BioMetrics';
@@ -98,6 +102,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     const [isTraveling, setIsTraveling] = useState(false);
     const [isDialogueDismissed, setIsDialogueDismissed] = useState(false);
     const [activeTab, setActiveTab] = useState<'terminal' | 'stats' | 'nav'>('terminal');
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isMobileNavCollapsed, setIsMobileNavCollapsed] = useState(false);
 
     // Multiplayer WebSocket Link & Party Comms
     const {
@@ -159,11 +165,41 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
     };
 
     return (
-        <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-hidden flex flex-col p-3 md:p-6 relative pb-[70px] md:pb-6">
+        <div className="h-[100dvh] w-full bg-space-gradient text-slate-200 font-sans overflow-hidden flex flex-col p-2.5 sm:p-4 md:p-6 relative pt-[max(env(safe-area-inset-top,28px),28px)] md:pt-6 pb-[64px] md:pb-6">
 
             {/* Ambient Background Glows */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-stitch-blue/20 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-stitch-cyan/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+            {/* Mobile Top Header - Shields content from camera/notch & displays at-a-glance telemetry */}
+            <div className="md:hidden flex items-center justify-between px-3 py-1.5 mb-2 bg-black/60 border border-stitch-blue/30 rounded-xl backdrop-blur-md shadow-sm flex-shrink-0 z-20">
+                <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${isMultiplayerConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+                    <span className="font-bold text-xs tracking-wider text-stitch-cyan uppercase font-mono">
+                        Mystic Explorers
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                    {gameState?.time && (
+                        <span className="flex items-center gap-1 text-slate-300 bg-black/40 px-2 py-0.5 rounded border border-white/5">
+                            <span>{gameState.time.is_night ? '🌙' : '☀️'}</span>
+                            <span>{String(gameState.time.hour).padStart(2, '0')}:{String(gameState.time.minute).padStart(2, '0')}</span>
+                        </span>
+                    )}
+                    {gameState?.player && (
+                        <span className="text-amber-300 font-bold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
+                            🪙 {gameState.player.stats.gold ?? 0}
+                        </span>
+                    )}
+                    <button
+                        onClick={() => setIsHelpOpen(true)}
+                        className="text-slate-400 hover:text-white p-0.5 rounded"
+                        title="Command Help"
+                    >
+                        <HelpCircle size={15} />
+                    </button>
+                </div>
+            </div>
 
             {/* Main Container */}
             <div className="w-full max-w-7xl flex-1 flex flex-col md:flex-row gap-3 md:gap-5 relative z-20 mx-auto min-h-0">
@@ -210,10 +246,10 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                 </div>
 
                 {/* Right Column: Status Panels, Location & Navigation */}
-                <div className="w-full md:w-80 lg:w-96 flex flex-col gap-3 min-h-0 flex-shrink-0">
+                <div className={`w-full md:w-80 lg:w-96 flex-col gap-3 min-h-0 md:flex-shrink-0 ${activeTab !== 'terminal' ? 'flex flex-1' : 'hidden md:flex'}`}>
                     
                     {/* BioMetrics & Action Hub (Desktop + Stats Tab) */}
-                    <div className={`flex-col gap-3 ${activeTab === 'stats' ? 'flex' : 'hidden md:flex'}`}>
+                    <div className={`flex-col gap-3 flex-1 overflow-y-auto pb-4 md:pb-0 scrollbar-thin pt-2 ${activeTab === 'stats' ? 'flex' : 'hidden md:flex'}`}>
                         {gameState?.player ? (
                             <>
                                 <BioMetrics
@@ -260,21 +296,22 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                     </div>
 
                     {/* Location Info, Detected Entities, Tactical Actions & Exits */}
-                    <div className={`glass-panel rounded-2xl p-4 sm:p-5 flex-1 flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-stitch-blue/50 scrollbar-track-transparent ${activeTab === 'nav' ? 'flex' : 'hidden md:flex'}`}>
+                    <div className={`glass-panel rounded-2xl p-3 sm:p-5 flex-1 flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] min-h-0 ${activeTab === 'nav' ? 'flex' : 'hidden md:flex'}`}>
                         {gameState?.location ? (
                             <>
-                                <LocationInfo
-                                    name={gameState.location.name}
-                                    coordinates={gameState.location.coordinates}
-                                    description={gameState.location.description}
-                                    isDark={gameState.location.is_dark}
-                                    availableActions={gameState.available_actions || []}
-                                    interactables={gameState.location.interactables || []}
-                                    onDrink={onDrink}
-                                    onOpenCrafting={() => setIsCraftingOpen(true)}
-                                />
+                                {/* Top Scrollable Area: Location Info & Entities */}
+                                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-stitch-blue/50 scrollbar-track-transparent pr-1 min-h-0 flex flex-col gap-2">
+                                    <LocationInfo
+                                        name={gameState.location.name}
+                                        coordinates={gameState.location.coordinates}
+                                        description={gameState.location.description}
+                                        isDark={gameState.location.is_dark}
+                                        availableActions={gameState.available_actions || []}
+                                        interactables={gameState.location.interactables || []}
+                                        onDrink={onDrink}
+                                        onOpenCrafting={() => setIsCraftingOpen(true)}
+                                    />
 
-                                <div className="mt-2 overflow-y-auto pr-1">
                                     <EntityList
                                         items={gameState.location.items}
                                         enemies={gameState.location.enemies}
@@ -289,48 +326,49 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                                         onOpenCrafting={() => setIsCraftingOpen(true)}
                                         onWhisperPlayer={(target) => sendWhisper(target, 'Hello')}
                                     />
+
+                                    {/* Tactical Abilities - ONLY shown during combat when hostiles are detected */}
+                                    {gameState?.player && (gameState.location.enemies?.length || 0) > 0 && (
+                                        <div className="mt-1">
+                                            <SkillBar
+                                                characterClass={gameState.player.stats.character_class || 'adventurer'}
+                                                playerMp={gameState.player.stats.mp}
+                                                maxMp={gameState.player.stats.max_mp}
+                                                skillCooldowns={gameState.player.skill_cooldowns || {}}
+                                                enemies={gameState.location.enemies}
+                                                onUseSkill={(skillName, targetName) => {
+                                                    if (onUseSkill) onUseSkill(skillName, targetName);
+                                                }}
+                                                onOpenClassSelect={() => setIsClassSelectOpen(true)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Tactical Abilities - ONLY shown during combat when hostiles are detected */}
-                                {gameState?.player && (gameState.location.enemies?.length || 0) > 0 && (
-                                    <div className="mt-3">
-                                        <SkillBar
-                                            characterClass={gameState.player.stats.character_class || 'adventurer'}
-                                            playerMp={gameState.player.stats.mp}
-                                            maxMp={gameState.player.stats.max_mp}
-                                            skillCooldowns={gameState.player.skill_cooldowns || {}}
-                                            enemies={gameState.location.enemies}
-                                            onUseSkill={(skillName, targetName) => {
-                                                if (onUseSkill) onUseSkill(skillName, targetName);
+                                {/* Bottom Docked Controls: Navigation & System Shortcuts */}
+                                <div className="flex-shrink-0 pt-2 border-t border-stitch-blue/20 flex flex-col gap-2 mt-1">
+                                    <NavigationGrid
+                                        exits={gameState.location.exits}
+                                        onMove={onCommand}
+                                    />
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setIsWaypointsOpen(true)}
+                                            className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-blue hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-lightBlue shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-colors text-[11px]"
+                                        >
+                                            <Map size={14} /> Waypoints
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (onScout) onScout();
+                                                setIsRadarOpen(true);
                                             }}
-                                            onOpenClassSelect={() => setIsClassSelectOpen(true)}
-                                        />
+                                            className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-cyan/30 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.2)] transition-colors text-[11px]"
+                                        >
+                                            <Radio size={14} /> Radar
+                                        </button>
                                     </div>
-                                )}
-
-                                <div className="flex-1 min-h-[10px]"></div>
-
-                                <NavigationGrid
-                                    exits={gameState.location.exits}
-                                    onMove={onCommand}
-                                />
-
-                                <div className="grid grid-cols-2 gap-2 mt-3">
-                                    <button
-                                        onClick={() => setIsWaypointsOpen(true)}
-                                        className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-blue hover:text-white font-bold tracking-widest uppercase border-stitch-blue/30 hover:border-stitch-lightBlue shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-colors text-[11px]"
-                                    >
-                                        <Map size={14} /> Waypoints
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (onScout) onScout();
-                                            setIsRadarOpen(true);
-                                        }}
-                                        className="glass-panel-interactive py-2 rounded-lg flex items-center justify-center gap-1.5 text-stitch-cyan hover:text-white font-bold tracking-widest uppercase border-stitch-cyan/30 hover:border-stitch-cyan shadow-[0_0_10px_rgba(6,182,212,0.2)] transition-colors text-[11px]"
-                                    >
-                                        <Radio size={14} /> Radar
-                                    </button>
                                 </div>
                             </>
                         ) : (
@@ -342,37 +380,79 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
                 </div>
             </div>
 
-            {/* Mobile Bottom Navigation Bar */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-stitch-blue/30 p-2 flex justify-around z-50">
-                <button
-                    onClick={() => setActiveTab('terminal')}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'terminal' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                    <TerminalSquare size={20} />
-                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Terminal</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab('stats')}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'stats' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                    <div className="relative">
-                        <Activity size={20} />
-                        {isPlayerLowHealth && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></div>}
-                    </div>
-                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Stats</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab('nav')}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'nav' ? 'text-stitch-cyan bg-stitch-cyan/10' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                    <div className="relative">
-                        <Map size={20} />
-                        {hasEnemies && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-black"></div>}
-                        {hasItems && !hasEnemies && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-stitch-cyan rounded-full border border-black"></div>}
-                    </div>
-                    <span className="text-[9px] mt-1 tracking-wider uppercase font-bold">Map</span>
-                </button>
-            </div>
+            {/* Mobile Bottom Navigation Bar & Collapsed Dock */}
+            {isMobileNavCollapsed ? (
+                /* Collapsed Floating Menu Toggle */
+                <div className="md:hidden fixed bottom-3 right-3 z-50">
+                    <button
+                        onClick={() => setIsMobileNavCollapsed(false)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-900/95 border border-stitch-cyan/60 text-stitch-cyan shadow-[0_0_15px_rgba(6,182,212,0.4)] backdrop-blur-md font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                        <ChevronUp size={15} />
+                        <span>Menú</span>
+                        {pendingInvite && (
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                        )}
+                    </button>
+                </div>
+            ) : (
+                /* Active Mobile Bottom Navigation Bar */
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-stitch-blue/30 px-2 py-1 flex items-center justify-around z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+                    <button
+                        onClick={() => { setActiveTab('terminal'); setIsChatOpen(false); }}
+                        className={`flex flex-col items-center py-1 px-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'terminal' && !isChatOpen ? 'text-stitch-cyan bg-stitch-cyan/15 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <TerminalSquare size={19} />
+                        <span className="text-[9px] mt-0.5 tracking-wider uppercase font-bold">Terminal</span>
+                    </button>
+
+                    <button
+                        onClick={() => { setActiveTab('stats'); setIsChatOpen(false); }}
+                        className={`flex flex-col items-center py-1 px-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'stats' && !isChatOpen ? 'text-stitch-cyan bg-stitch-cyan/15 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <div className="relative">
+                            <Activity size={19} />
+                            {isPlayerLowHealth && <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>}
+                        </div>
+                        <span className="text-[9px] mt-0.5 tracking-wider uppercase font-bold">Stats</span>
+                    </button>
+
+                    <button
+                        onClick={() => { setActiveTab('nav'); setIsChatOpen(false); }}
+                        className={`flex flex-col items-center py-1 px-2 rounded-lg transition-colors flex-1 relative ${activeTab === 'nav' && !isChatOpen ? 'text-stitch-cyan bg-stitch-cyan/15 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <div className="relative">
+                            <Map size={19} />
+                            {hasEnemies && <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-black"></div>}
+                            {hasItems && !hasEnemies && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-stitch-cyan rounded-full border border-black"></div>}
+                        </div>
+                        <span className="text-[9px] mt-0.5 tracking-wider uppercase font-bold">Map</span>
+                    </button>
+
+                    <button
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className={`flex flex-col items-center py-1 px-2 rounded-lg transition-colors flex-1 relative ${isChatOpen ? 'text-stitch-cyan bg-stitch-cyan/15 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <div className="relative">
+                            <MessageSquare size={19} />
+                            <span className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${isMultiplayerConnected ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+                            {pendingInvite && (
+                                <span className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
+                            )}
+                        </div>
+                        <span className="text-[9px] mt-0.5 tracking-wider uppercase font-bold">Chat</span>
+                    </button>
+
+                    {/* Collapse Button */}
+                    <button
+                        onClick={() => setIsMobileNavCollapsed(true)}
+                        className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors rounded-md"
+                        title="Ocultar menú"
+                    >
+                        <ChevronDown size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Modals Suite */}
             
@@ -484,6 +564,8 @@ const MainGameHUD: React.FC<MainGameHUDProps> = ({
 
             {/* 11. Real-time Multiplayer Chat & Party Comms */}
             <MultiplayerChatPanel
+                isOpen={isChatOpen}
+                onToggleOpen={setIsChatOpen}
                 isConnected={isMultiplayerConnected}
                 messages={chatMessages}
                 party={party}
